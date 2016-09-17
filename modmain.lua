@@ -38,7 +38,7 @@ local UNITS =
 {
 	T = function(val) return math.floor(val+0.5) .. "\176" end,
 	C = function(val) return math.floor(val/2 + 0.5) .. "\176C" end,
-	F = function(val) return math.floor(1.8*(val) + 32.5).."\176F" end,
+	F = function(val) return math.floor(0.9*(val) + 32.5).."\176F" end,
 }
 
 local RPGHUD = false
