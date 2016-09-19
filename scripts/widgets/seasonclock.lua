@@ -115,7 +115,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst)
 
     --Register events
 	if self._dst then
-		self.inst:ListenForEvent("cycleschanged", function(inst, data) self:OnCyclesChanged(data) end, TheWorld)
+		self.inst:ListenForEvent("seasontick", function(inst, data) self:OnCyclesChanged(data) end, TheWorld)
 		self.inst:ListenForEvent("seasonlengthschanged", function(inst, data) self:OnSeasonLengthsChanged(data) end, TheWorld)
 		self.inst:ListenForEvent("phasechanged", function(inst, data) self:OnPhaseChanged(data) end, TheWorld)
 	else
@@ -259,7 +259,7 @@ function SeasonClock:OnSeasonLengthsChanged(data)
     end
 end
 
-function SeasonClock:OnCyclesChanged()
+function SeasonClock:OnCyclesChanged(data)
 	local progress = 0
 	local i = 1
 	local season = self._dst and TheWorld.state.season or GetSeasonManager():GetSeasonString()
