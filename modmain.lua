@@ -260,8 +260,10 @@ local function ControlsPostConstruct(self)
 	
 	self.sidepanel:SetPosition(-100, -70)
 	
-	if not DST and GLOBAL.GetWorld():IsCave() and not HIDECAVECLOCK then
-		self.clock:Show()
+	if not DST and GLOBAL.GetWorld():IsCave() then
+		if not HIDECAVECLOCK then
+			self.clock:Show()
+		end
 		self.status:SetPosition(0, -110)
 	end
 	
