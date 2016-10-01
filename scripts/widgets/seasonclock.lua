@@ -122,20 +122,22 @@ local SeasonClock = Class(Widget, function(self, owner, isdst)
 	else
 		self.inst:ListenForEvent("daycomplete", function(inst, data) self:OnCyclesChanged() self:UpdateSeasonString() end, GetWorld())
 		self.inst:ListenForEvent("seasonChange", function() self:UpdateSeasonString() self:OnSeasonLengthsChanged() end, GetWorld())
-		self.inst:ListenForEvent("daytime", function(inst, data) self:OnPhaseChanged("day") end, GetWorld())
-		self.inst:ListenForEvent("dusktime", function(inst, data) self:OnPhaseChanged("dusk") end, GetWorld())
-		self.inst:ListenForEvent("nighttime", function(inst, data) self:OnPhaseChanged("night") end, GetWorld())
-		self.inst:ListenForEvent("clocktick", function(inst, data)
-			local t = data.normalizedtime
-			if data.phase == "day" then
-				local segs = 16
-				if math.floor(t * segs) > 0 and math.floor(t * segs) ~= math.floor(self._old_t * segs) then
-					self._anim:GetAnimState():PlayAnimation("pulse_day") 
-					self._anim:GetAnimState():PushAnimation("idle_day", true)            
+		if not self._cave then
+			self.inst:ListenForEvent("daytime", function(inst, data) self:OnPhaseChanged("day") end, GetWorld())
+			self.inst:ListenForEvent("dusktime", function(inst, data) self:OnPhaseChanged("dusk") end, GetWorld())
+			self.inst:ListenForEvent("nighttime", function(inst, data) self:OnPhaseChanged("night") end, GetWorld())
+			self.inst:ListenForEvent("clocktick", function(inst, data)
+				local t = data.normalizedtime
+				if data.phase == "day" then
+					local segs = 16
+					if math.floor(t * segs) > 0 and math.floor(t * segs) ~= math.floor(self._old_t * segs) then
+						self._anim:GetAnimState():PlayAnimation("pulse_day") 
+						self._anim:GetAnimState():PushAnimation("idle_day", true)            
+					end
 				end
-			end
-			self._old_t = t
-		end, GetWorld())
+				self._old_t = t
+			end, GetWorld())
+		end
 	end
 end)
 
