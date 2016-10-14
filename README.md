@@ -14,7 +14,7 @@ Option | Description
 **Show World Temp** | Whether to show the temperature of the world. Defaults to _Hide_.
 **Show Temp Badges** | Whether to show small images to indicate which temperature is which. Badges only get shown if this is set to _Show_ and both player and world temperatures are enabled. Defaults to _Show_.
 **Temperature Unit** | Whether to use the game's internal units (default), or approximations of Fahrenheit or Celsius. In _Game Units_, the player freezes at 0 and overheats at 70, with warning occurring 5 away. In _Celsius_, the player freezes at 0 and overheats at 35, with warning occurring 2.5 degrees away. In _Fahrenheit_, the player freezes at 32 and overheats at 95, with warning occurring 4.5 degrees away.
-**Show Waning** | Whether to show if the moon is waxing or waning by adding new icons. Defaults to _Show_. (The game normally only shows icons for one direction). In Don't Starve Together, this information is not available on clients, so it may be incorrect when you first join the game (until the moon phase changes).
+**Show Waning** | Whether to show if the moon is waxing or waning by adding new icons. Defaults to _Show_. (The game normally only shows icons for one direction). In Don't Starve Together, this is now a feature of the main game, so the option doesn't do anything.
 **Show Moon** | Whether to show the moon only at _Night_ (the game's default), during night and dusk (_Dusk_, the mod's default), or _Always_.
 **Predict Full Moon** | Whether to predict the day of the next full moon, shown when hovering over the moon icon. Defaults to _Yes_.
 **Flip Moon** | Whether to flip the moon phase icon to show it like it is in the Southern Hemisphere, instead of the default Northern Hemisphere. Defaults to _No_.
