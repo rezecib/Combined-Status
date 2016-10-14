@@ -17,7 +17,6 @@ Option | Description
 **Show Waning** | Whether to show if the moon is waxing or waning by adding new icons. Defaults to _Show_. (The game normally only shows icons for one direction). In Don't Starve Together, this information is not available on clients, so it may be incorrect when you first join the game (until the moon phase changes).
 **Show Moon** | Whether to show the moon only at _Night_ (the game's default), during night and dusk (_Dusk_, the mod's default), or _Always_.
 **Predict Full Moon** | Whether to predict the day of the next full moon, shown when hovering over the moon icon. Defaults to _Yes_.
-**Predict Moon Phase** | Whether to predict the moon phase based on the day count. Only relevant in DST, where moon phase is not available to clients unless it is nighttime. Defaults to _Yes_.
 **Flip Moon** | Whether to flip the moon phase icon to show it like it is in the Southern Hemisphere, instead of the default Northern Hemisphere. Defaults to _No_.
 **Season Clock** | _Clock_, the default, shows a full clock of the seasons. _Compact_ shows a smaller badge with the season and day count, while _Micro_ shows an even smaller badge. _No_ disables the season clock entirely.
 **Naughtiness** | Whether to show the naughtiness of the player. Doesn't work in Don't Starve Together, as  naughtiness is not available to clients. Defaults to _Show_.
