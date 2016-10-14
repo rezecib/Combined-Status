@@ -8,7 +8,7 @@ description = "Displays Health, Hunger, Sanity, Temperature, Seasons, Moon Phase
 author = "rezecib, Kiopho, Soilworker, hotmatrixx"
 
 --A version number so you can ask people if they are running an old version of your mod.
-version = "1.6.12"
+version = "1.6.13"
 
 --This lets other players know if your mod is out of date. This typically needs to be updated every time there's a new game update.
 api_version = 6
@@ -101,7 +101,7 @@ configuration_options =
 		name = "SHOWWANINGMOON",
 		label = "Show Waning",
 		hover = "Show both the waxing and waning moon phases separately."
-			 .. "\nIt may be incorrect when you first join the game (until the phase changes).",
+			 .. "\nDoesn't do anything in DST, which already shows waxing and waning.",
 		options =	{
 						{description = "Show", data = true},
 						{description = "Don't", data = false},
@@ -124,18 +124,6 @@ configuration_options =
 		label = "Predict Full Moon",
 		hover = "Predicts the day number of the next full moon,"
 			 .. "\nshowing it on the moon badge when moused over.",
-		options =	{
-						{description = "Yes", data = true},
-						{description = "No", data = false},
-					},
-		default = true,
-	},
-	{
-		name = "PREDICTMOONPHASE",
-		label = "Predict Moon",
-		hover = "Predicts the moon phase based on the day count"
-			 .. "\n(technically the game changed phase at nightfall)."
-			 .. "\nIt may be incorrect if a mod/setting changes the moon phases.",
 		options =	{
 						{description = "Yes", data = true},
 						{description = "No", data = false},

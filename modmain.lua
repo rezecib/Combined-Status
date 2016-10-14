@@ -22,7 +22,6 @@ local SHOWMOON = GetModConfigData("SHOWMOON")
 local SHOWMOONDAY = SHOWMOON > 1
 local SHOWMOONDUSK = SHOWMOON > 0
 local SHOWWANINGMOON = GetModConfigData("SHOWWANINGMOON")
-local PREDICTMOONPHASE = GetModConfigData("PREDICTMOONPHASE")
 local SHOWNEXTFULLMOON = GetModConfigData("SHOWNEXTFULLMOON")
 local FLIPMOON = GetModConfigData("FLIPMOON")
 local waxingmoonanim = FLIPMOON and "moon_phases" or "moon_waning_phases"
@@ -457,10 +456,6 @@ local function UIClockPostInit(self)
 	
 		if self._cave then return end
 		
-		if SHOWWANINGMOON then
-			self._waxing = true
-		end
-		
 		--copied code below from components/clock.lua; make sure it stays up-to-date
 		local MOON_PHASE_NAMES =
 		{
@@ -516,12 +511,6 @@ local function UIClockPostInit(self)
 		if SHOWMOONDUSK then
 			--it sucks to have to override the whole thing, but... it hasn't changed in forever, so *shrug*
 			self.OnPhaseChanged = function(self, phase)
-				if PREDICTMOONPHASE then
-					if phase ~= "night" then
-						self:OnMoonPhaseChanged(MOON_PHASE_SLOTS[(GLOBAL.TheWorld.state.cycles+offset)%#MOON_PHASE_SLOTS + 1])
-					end
-				end
-				
 				if self._phase == phase then
 					return
 				end
@@ -562,41 +551,17 @@ local function UIClockPostInit(self)
 			
 			local moonphases = { new = 0, quarter = 1, half = 2, threequarter = 3, full = 4 }
 			
-			local OldOnMoonPhaseChanged = self.OnMoonPhaseChanged
-			self.OnMoonPhaseChanged = function(self, moonphase)
-				if SHOWWANINGMOON and self._moonphase ~= moonphase then
-					self._waxing = moonphases[self._moonphase] == (1 - moonphases[moonphase])%5
-				end
+			--Really not sure why they kept in the 2, I would expect it to be reverted without warning, so... catch potential future crash?
+			local moonphasechanged_fname = self.OnMoonPhaseChanged2 and "OnMoonPhaseChanged2" or self.OnMoonPhaseChanged
+			local OldOnMoonPhaseChanged = self[moonphasechanged_fname]
+			self[moonphasechanged_fname] = function(self, moonphase)
 				OldOnMoonPhaseChanged(self, moonphase)
-				if (SHOWMOONDUSK and self._phase == "dusk") or (SHOWMOONDAY and self._phase == "day") then
+				if (SHOWMOONDUSK and self._phase == "dusk" and SHOWMOONDUSK) or (SHOWMOONDAY and self._phase == "day") then
 					self:ShowMoon()
 				end
 			end
 		end
 		
-		if SHOWWANINGMOON then
-			self.ShowMoon = function(self)
-				local moon_syms =
-				{
-					full = "moon_full",
-					quarter = "moon_quarter",
-					new = "moon_new",
-					threequarter = "moon_three_quarter",
-					half = "moon_half",
-				}
-				if self._waxing then
-					self._moonanim:GetAnimState():OverrideSymbol("swap_moon", waxingmoonanim, moon_syms[self._moonphase] or "moon_full")
-				else
-					self._moonanim:GetAnimState():OverrideSymbol("swap_moon", waningmoonanim, moon_syms[self._moonphase] or "moon_full")
-				end
-				if self._phase ~= nil then
-					self._moonanim:GetAnimState():PlayAnimation("trans_out")
-					self._moonanim:GetAnimState():PushAnimation("idle", true)
-				else
-					self._moonanim:GetAnimState():PlayAnimation("idle", true)
-				end
-			end
-		end
 	else -- Not DST
 		-- Cave clock rim
 		if GLOBAL.GetWorld():IsCave() then
