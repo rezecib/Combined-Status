@@ -246,9 +246,14 @@ local function AddSeasonBadge(self)
 end
 
 local function ControlsPostConstruct(self)
-	local text = (DST and "_" or "") .. "text"
-	self.clock[text]:SetPosition(5, 0)
-	self.clock[text]:SetScale(.8, .8, 0)
+	if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
+		self.clock.text_upper:SetScale(.8, .8, 0)
+		self.clock.text_lower:SetScale(.8, .8, 0)
+	else
+		local text = (DST and "_" or "") .. "text"
+		self.clock[text]:SetPosition(5, 0)
+		self.clock[text]:SetScale(.8, .8, 0)
+	end
 
 	if SHOWSEASONCLOCK then
 		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST))
