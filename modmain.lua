@@ -39,6 +39,9 @@ local UNITS =
 	C = function(val) return math.floor(val/2 + 0.5) .. "\176C" end,
 	F = function(val) return math.floor(0.9*(val) + 32.5).."\176F" end,
 }
+--Expose our unit and unit conversion functions to other mods that may deal with temperature
+GLOBAL.TUNING.COMBINED_STATUS_UNITS = UNITS
+GLOBAL.TUNING.COMBINED_STATUS_UNIT = UNIT
 
 local RPGHUD = false
 local REZECIBSREBALANCE = DST and GLOBAL.KnownModIndex:IsModEnabled("workshop-741879530")
@@ -243,14 +246,9 @@ local function AddSeasonBadge(self)
 end
 
 local function ControlsPostConstruct(self)
-	if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
-		self.clock.text_upper:SetScale(.8, .8, 0)
-		self.clock.text_lower:SetScale(.8, .8, 0)
-	else
-		local text = (DST and "_" or "") .. "text"
-		self.clock[text]:SetPosition(5, 0)
-		self.clock[text]:SetScale(.8, .8, 0)
-	end
+	local text = (DST and "_" or "") .. "text"
+	self.clock[text]:SetPosition(5, 0)
+	self.clock[text]:SetScale(.8, .8, 0)
 
 	if SHOWSEASONCLOCK then
 		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST))
