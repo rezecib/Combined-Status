@@ -68,6 +68,11 @@ local Badge = GLOBAL.require("widgets/badge")
 
 local function BadgePostConstruct(self)
 	self:SetScale(.9,.9,.9)
+	-- Make sure that badge scaling animations are adjusted accordingly (e.g. WX's upgrade animation)
+	local _ScaleTo = self.ScaleTo
+	self.ScaleTo = function(self, from, to, ...)
+		return _ScaleTo(self, from*.9, to*.9, ...)
+	end
 	
 	if not SHOWSTATNUMBERS then return end
 	
@@ -673,23 +678,6 @@ if not DST and SHOWWANINGMOON then
 		end
 	end
 	AddComponentPostInit("clock", ClockPostInit)
-end
-
--- WX78 Upgrade Animation Fix (single-player only)
-local function wx78eat(inst)
-	local oldoneatfn = inst.components.eater.oneatfn
-	inst.components.eater.oneatfn = function(inst, food, ...)
-		oldoneatfn(inst, food, ...)
-		if food and food.components.edible and food.components.edible.foodtype == "GEARS" then			
-			inst.HUD.controls.status.brain:ScaleTo(1.2, .9, .7)
-			inst.HUD.controls.status.heart:ScaleTo(1.2, .9, .7)
-			inst.HUD.controls.status.stomach:ScaleTo(1.2, .9, .7)
-		end
-	end
-end
-
-if not DST then
-	AddPrefabPostInit("wx78", wx78eat)
 end
 
 if REZECIBSREBALANCE then
