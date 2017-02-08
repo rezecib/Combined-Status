@@ -564,10 +564,10 @@ local function UIClockPostInit(self)
 			local moonphases = { new = 0, quarter = 1, half = 2, threequarter = 3, full = 4 }
 			
 			--Really not sure why they kept in the 2, I would expect it to be reverted without warning, so... catch potential future crash?
-			local moonphasechanged_fname = self.OnMoonPhaseChanged2 and "OnMoonPhaseChanged2" or self.OnMoonPhaseChanged
-			local OldOnMoonPhaseChanged = self[moonphasechanged_fname]
-			self[moonphasechanged_fname] = function(self, moonphase)
-				OldOnMoonPhaseChanged(self, moonphase)
+			local moonphasechanged_fname = self.OnMoonPhaseChanged2 and "OnMoonPhaseChanged2" or "OnMoonPhaseChanged"
+			local _OnMoonPhaseChanged = self[moonphasechanged_fname]
+			self[moonphasechanged_fname] = function(self, moonphase, ...)
+				_OnMoonPhaseChanged(self, moonphase, ...)
 				if (SHOWMOONDUSK and self._phase == "dusk" and SHOWMOONDUSK) or (SHOWMOONDAY and self._phase == "day") then
 					self:ShowMoon()
 				end
