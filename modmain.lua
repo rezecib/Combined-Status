@@ -68,11 +68,6 @@ local Badge = GLOBAL.require("widgets/badge")
 
 local function BadgePostConstruct(self)
 	self:SetScale(.9,.9,.9)
-	-- Make sure that badge scaling animations are adjusted accordingly (e.g. WX's upgrade animation)
-	local _ScaleTo = self.ScaleTo
-	self.ScaleTo = function(self, from, to, ...)
-		return _ScaleTo(self, from*.9, to*.9, ...)
-	end
 	
 	if not SHOWSTATNUMBERS then return end
 	
@@ -120,7 +115,7 @@ local function BadgePostConstruct(self)
 	local OldSetValue = self.SetValue
 	if OldSetValue then
 		function self:SetValue(val, max, ...)
-			self.maxnum:SetString("Max:\n"..tostring(math.ceil(max)))
+			self.maxnum:SetString(maxtxt..tostring(math.ceil(max)))
 			OldSetValue(self, val, max, ...)
 		end
 	end
@@ -251,14 +246,9 @@ local function AddSeasonBadge(self)
 end
 
 local function ControlsPostConstruct(self)
-	if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
-		self.clock.text_upper:SetScale(.8, .8, 0)
-		self.clock.text_lower:SetScale(.8, .8, 0)
-	else
-		local text = (DST and "_" or "") .. "text"
-		self.clock[text]:SetPosition(5, 0)
-		self.clock[text]:SetScale(.8, .8, 0)
-	end
+	local text = (DST and "_" or "") .. "text"
+	self.clock[text]:SetPosition(5, 0)
+	self.clock[text]:SetScale(.8, .8, 0)
 
 	if SHOWSEASONCLOCK then
 		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST))
@@ -678,6 +668,23 @@ if not DST and SHOWWANINGMOON then
 		end
 	end
 	AddComponentPostInit("clock", ClockPostInit)
+end
+
+-- WX78 Upgrade Animation Fix (single-player only)
+local function wx78eat(inst)
+	local oldoneatfn = inst.components.eater.oneatfn
+	inst.components.eater.oneatfn = function(inst, food, ...)
+		oldoneatfn(inst, food, ...)
+		if food and food.components.edible and food.components.edible.foodtype == "GEARS" then			
+			inst.HUD.controls.status.brain:ScaleTo(1.2, .9, .7)
+			inst.HUD.controls.status.heart:ScaleTo(1.2, .9, .7)
+			inst.HUD.controls.status.stomach:ScaleTo(1.2, .9, .7)
+		end
+	end
+end
+
+if not DST then
+	AddPrefabPostInit("wx78", wx78eat)
 end
 
 if REZECIBSREBALANCE then
