@@ -57,11 +57,11 @@ end
 local Widget = GLOBAL.require('widgets/widget')
 local Image = GLOBAL.require('widgets/image')
 local Text = GLOBAL.require('widgets/text')
-local PlayerBadge = GLOBAL.require("widgets/playerbadge" .. (DST and "" or "_aos"))
+local PlayerBadge = GLOBAL.require("widgets/playerbadge" .. (DST and "" or "_combined_status"))
 local Minibadge = GLOBAL.require("widgets/minibadge")
 if not DST then
-	table.insert(Assets, Asset("ATLAS", "images/avatars.xml"))
-	table.insert(Assets, Asset("IMAGE", "images/avatars.tex"))
+	table.insert(Assets, Asset("ATLAS", "images/avatars_combined_status.xml"))
+	table.insert(Assets, Asset("IMAGE", "images/avatars_combined_status.tex"))
 	table.insert(Assets, Asset("ANIM", "anim/cave_clock.zip"))
 end
 local Badge = GLOBAL.require("widgets/badge")
