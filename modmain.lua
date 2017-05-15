@@ -287,6 +287,7 @@ local function ControlsPostConstruct(self)
 		local scale = GLOBAL.TheFrontEnd:GetHUDScale()*HUDSCALEFACTOR
 		self.topright_root:SetScale(scale)
 	end
+	self:SetHUDSize()
 end
 AddClassPostConstruct("widgets/controls", ControlsPostConstruct)
 
