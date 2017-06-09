@@ -44,27 +44,24 @@ GLOBAL.TUNING.COMBINED_STATUS_UNITS = UNITS
 GLOBAL.TUNING.COMBINED_STATUS_UNIT = UNIT
 
 local RPGHUD = false
-local REZECIBSREBALANCE = DST and GLOBAL.KnownModIndex:IsModEnabled("workshop-741879530")
 for _, moddir in ipairs(GLOBAL.KnownModIndex:GetModsToLoad()) do
-	if DST and moddir == "workshop-741879530" then
-		REZECIBSREBALANCE = true
-	end
     if string.match(GLOBAL.KnownModIndex:GetModInfo(moddir).name or "", "RPG HUD") then
 		RPGHUD = true
     end
 end
 
-local Widget = GLOBAL.require('widgets/widget')
-local Image = GLOBAL.require('widgets/image')
-local Text = GLOBAL.require('widgets/text')
-local PlayerBadge = GLOBAL.require("widgets/playerbadge" .. (DST and "" or "_combined_status"))
-local Minibadge = GLOBAL.require("widgets/minibadge")
+local require = GLOBAL.require
+local Widget = require('widgets/widget')
+local Image = require('widgets/image')
+local Text = require('widgets/text')
+local PlayerBadge = require("widgets/playerbadge" .. (DST and "" or "_combined_status"))
+local Minibadge = require("widgets/minibadge")
 if not DST then
 	table.insert(Assets, Asset("ATLAS", "images/avatars_combined_status.xml"))
 	table.insert(Assets, Asset("IMAGE", "images/avatars_combined_status.tex"))
 	table.insert(Assets, Asset("ANIM", "anim/cave_clock.zip"))
 end
-local Badge = GLOBAL.require("widgets/badge")
+local Badge = require("widgets/badge")
 
 local function BadgePostConstruct(self)
 	self:SetScale(.9,.9,.9)
@@ -680,14 +677,16 @@ if not DST and SHOWWANINGMOON then
 	AddComponentPostInit("clock", ClockPostInit)
 end
 
-if REZECIBSREBALANCE then
-	AddClassPostConstruct("screens/playerhud", function(self)
+AddClassPostConstruct("screens/playerhud", function(self)
+	if GLOBAL.softresolvefilepath("scripts/widgets/beefalowidget.lua") then
 		AddClassPostConstruct("widgets/beefalowidget", function(self)
-			self.health:SetScale(1,1,1)
-			self.health:SetPosition(80, 164)
-			self.hunger:SetScale(1,1,1)
-			self.hunger:SetPosition(-3, 164)
-			self.hunger.anim:SetPosition(0, -2)
+			if self.health and self.hunger and self.hunger.anim then
+				self.health:SetScale(1,1,1)
+				self.health:SetPosition(80, 164)
+				self.hunger:SetScale(1,1,1)
+				self.hunger:SetPosition(-3, 164)
+				self.hunger.anim:SetPosition(0, -2)
+			end
 		end)
-	end)
-end
+	end
+end)

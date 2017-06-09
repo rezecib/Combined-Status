@@ -8,7 +8,7 @@ description = "Displays Health, Hunger, Sanity, Temperature, Seasons, Moon Phase
 author = "rezecib, Kiopho, Soilworker, hotmatrixx"
 
 --A version number so you can ask people if they are running an old version of your mod.
-version = "1.6.19"
+version = "1.6.20"
 
 --This lets other players know if your mod is out of date. This typically needs to be updated every time there's a new game update.
 api_version = 6
