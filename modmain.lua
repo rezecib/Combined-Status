@@ -286,7 +286,9 @@ local function ControlsPostConstruct(self)
 	end
 	self:SetHUDSize()
 end
-AddClassPostConstruct("widgets/controls", ControlsPostConstruct)
+if not DST or GLOBAL.TheNet:GetServerGameMode() ~= "lavaarena" then
+	AddClassPostConstruct("widgets/controls", ControlsPostConstruct)
+end
 
 local function KrampedPostInit(self)
 	local OldOnUpdate = self.OnUpdate
