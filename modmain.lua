@@ -50,6 +50,11 @@ for _, moddir in ipairs(GLOBAL.KnownModIndex:GetModsToLoad()) do
     end
 end
 
+local TROPICAL = GLOBAL.KnownModIndex:IsModEnabled("workshop-1402200186")
+for k,v in pairs(GLOBAL.KnownModIndex:GetModsToLoad()) do
+	TROPICAL = TROPICAL or v == "workshop-1402200186"
+end
+
 local require = GLOBAL.require
 local Widget = require('widgets/widget')
 local Image = require('widgets/image')
@@ -135,8 +140,10 @@ local function BoatBadgePostConstruct(self)
 	self.num:MoveToFront()
 	self.num:Show()
 end
-if CSW and SHOWSTATNUMBERS then
-	AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
+if (CSW or TROPICAL) and SHOWSTATNUMBERS then
+	AddPrefabPostInit("world", function()
+		AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
+	end)
 end
 
 local function MoistureMeterPostConstruct(self)
