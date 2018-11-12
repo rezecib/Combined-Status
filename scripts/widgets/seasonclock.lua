@@ -25,28 +25,27 @@ local COLOURS =
 	WET = Vector3(149 / 255, 191 / 255, 242 / 255),		-- Hurricane
 	GREEN = Vector3(84 / 168, 200 / 255, 84 / 255),		-- Monsoon
 	DRY = Vector3(205 / 255, 79 / 255, 57 / 255),		-- Dry
+	
+	-- Hamlet seasons
+	TEMPERATE = Vector3(255 / 255, 206 / 255, 139 / 255),
+	HUMID = Vector3(149 / 255, 191 / 255, 242 / 255),
+	LUSH = Vector3(84 / 168, 200 / 255, 84 / 255),
+	APORKALYPSE = Vector3(205 / 255, 79 / 255, 57 / 255),
 }
 local DARKEN_PERCENT = .75
 
 --------------------------------------------------------------------------
 --[[ Constructor ]]
 --------------------------------------------------------------------------
-local SeasonClock = Class(Widget, function(self, owner, isdst)
+local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition_fn)
     Widget._ctor(self, "SeasonClock")
 
     --Member variables
 	self._dst = isdst
+	self._season_transition_fn = season_transition_fn
 	local world = self._dst and TheWorld or GetWorld()
     self._cave = (self._dst and world ~= nil and world:HasTag("cave"))
 			or (not self._dst and world:IsCave())
-	-- may need to add logic  the volcano specifically,
-	-- but for now we just need forto mark it as Shipwrecked
-	self._volcano = world ~= nil and world:HasTag("volcano")
-	self._shipwrecked = world ~= nil and ( world:HasTag("shipwrecked") or self._volcano )
-	local CAPY_DLC = rawget(_G, "CAPY_DLC")
-	self._rog = self._dst or IsDLCEnabled(REIGN_OF_GIANTS)
-		-- this occurs when going from Shipwrecked to RoG
-		or (not self._shipwrecked and CAPY_DLC and IsDLCEnabled(CAPY_DLC))
     self._anim = nil
     self._face = nil
     self._segs = {}
@@ -161,13 +160,15 @@ function SeasonClock:UpdateSeasonString()
 end
 
 function SeasonClock:UpdateRemainingString()
-	local str = ""
+	local days_left = ""
 	if self._dst then
-		str = TheWorld.state.remainingdaysinseason
+		days_left = TheWorld.state.remainingdaysinseason
 	else
-		str = GetSeasonManager():GetDaysLeftInSeason()
+		-- We ought to be able to use this but it wasn't updated for Hamlet...
+		-- days_left = GetSeasonManager():GetDaysLeftInSeason()
+		days_left = (1-GetSeasonManager().percent_season) * GetSeasonManager():GetSeasonLength()
 	end
-    self._text:SetString(math.floor(str+0.5) .. " days\nleft")
+    self._text:SetString(math.floor(days_left+0.5) .. " days\nleft")
     self._showingseasons = false
 end
 
@@ -192,9 +193,7 @@ function SeasonClock:GetSeasonLength(season)
 		return TheWorld.state[season .. "length"] or TUNING[season:upper() .. "_LENGTH"]
 	else -- should work for Vanilla, RoG, and Shipwrecked
 		local sm = GetSeasonManager()		
-		if sm.seasonmode == "cycle" or sm.seasonmode == "tropical" then
-			return sm[season .. "length"] or TUNING[season:upper() .. "_LENGTH"]
-		elseif sm.seasonmode:find("endless") then
+		if sm.seasonmode:find("endless") then
 			local begin,finish = sm.seasonmode:find("endless")
 			local endless_season = sm.seasonmode:sub(finish+1)
 			local current_season = sm.current_season
@@ -208,19 +207,13 @@ function SeasonClock:GetSeasonLength(season)
 			local always_season = sm.seasonmode:sub(finish+1)
 			return always_season == season and 10000 or 0
 		else
-			return 10000
+			return sm[season .. "length"] or TUNING[season:upper() .. "_LENGTH"] or 10000
 		end
 	end
 end
 
 function SeasonClock:GetSeasonLengths()
-	self.seasons = {"summer", "winter"}
-	if self._shipwrecked then
-		self.seasons = { "mild", "wet", "green", "dry" }
-	elseif self._rog then
-		self.seasons = { "autumn", "winter", "spring", "summer" }
-	end
-
+	self.seasons = self._season_transition_fn()
 	local lengths = {}
 	for i,v in ipairs(self.seasons) do
 		lengths[v] = self:GetSeasonLength(v)
@@ -293,7 +286,7 @@ function SeasonClock:OnCyclesChanged(data)
 		return -- Don't continue with the bad data
 	end
 	local segments = self.seasonsegments[season]
-	local elapsed = self._dst and TheWorld.state.elapseddaysinseason or GetSeasonManager():GetDaysIntoSeason()
+	local elapsed = self._dst and TheWorld.state.elapseddaysinseason or (GetSeasonManager().percent_season * GetSeasonManager():GetSeasonLength())
 	progress = progress + segments*elapsed/self:GetSeasonLength(season)
 	progress = progress / NUM_SEGS
 	self._hands:SetRotation(progress*360)

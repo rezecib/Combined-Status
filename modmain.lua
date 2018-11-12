@@ -16,6 +16,7 @@ end
 local DST = GLOBAL.TheSim.GetGameID ~= nil and GLOBAL.TheSim:GetGameID() == "DST"
 local ROG = DST or CheckDlcEnabled("REIGN_OF_GIANTS")
 local CSW = CheckDlcEnabled("CAPY_DLC")
+local HML = CheckDlcEnabled("PORKLAND_DLC")
 
 local SHOWSTATNUMBERS = GetModConfigData("SHOWSTATNUMBERS")
 local SHOWMAXONNUMBERS = GetModConfigData("SHOWMAXONNUMBERS")
@@ -147,7 +148,7 @@ local function BoatBadgePostConstruct(self)
 	self.num:MoveToFront()
 	self.num:Show()
 end
-if (CSW or TROPICAL) and SHOWSTATNUMBERS then
+if (CSW or HML or TROPICAL) and SHOWSTATNUMBERS then
 	AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
 	end)
@@ -171,8 +172,26 @@ local function MoistureMeterPostConstruct(self)
 	self.num:Hide()
 	self.bg:Hide()
 end
-if ROG or CSW then
+if ROG or CSW or HML then
 	AddClassPostConstruct("widgets/moisturemeter", MoistureMeterPostConstruct)
+end
+
+local function FindSeasonTransitions()
+	if DST then return {"autumn", "winter", "spring", "summer"} end
+	local season_trans = {}
+	-- scrape the SeasonManager's length data to see what seasons are enabled (covers Hamlet, Shipwrecked, RoG, Vanilla)
+	local longest_season_str = 0
+	local season_orders = {
+		"autumn", "winter", "spring", "summer",
+		"mild", "wet", "green", "dry",
+		"temperate", "humid", "lush", -- "aporkalypse",
+	}
+	for i, season in ipairs(season_orders) do
+		if GLOBAL.GetSeasonManager()[season .. "enabled"] then -- or GLOBAL.GetSeasonManager()[season .. "_enabled"] then
+			table.insert(season_trans, season)
+		end
+	end
+	return season_trans
 end
 
 local function AddSeasonBadge(self)
@@ -197,10 +216,17 @@ local function AddSeasonBadge(self)
 		self.season.bg:SetScale(0.63, .43, 1)
 		self.status.season = self.season -- making sure both get aliased to the same place
 	end
-	local season_trans = {"autumn", "winter", "spring", "summer"}
-	if not DST and (GLOBAL.GetWorld():HasTag("shipwrecked") or GLOBAL.GetWorld():HasTag("volcano")) then
-		season_trans = {"mild", "wet", "green", "dry"}
-		self.season.num:SetScale(.7, .6, 1) -- season names are way longer, e.g. Hurricane
+	local season_trans = FindSeasonTransitions()
+	if not DST then
+		-- weird seasons with long names might require smaller text, check and adjust
+		local longest_season_str = 0
+		for i, season in ipairs(season_trans) do
+			print("season:", season, "string:", GLOBAL.STRINGS.UI.SANDBOXMENU[season:upper()])
+			longest_season_str = math.max(longest_season_str, GLOBAL.STRINGS.UI.SANDBOXMENU[season:upper()]:len())
+		end
+		if longest_season_str > 6 then
+			self.season.num:SetScale(.7, .6, 1)
+		end
 	end
 	local season_lookup = {}
 	for i,v in ipairs(season_trans) do season_lookup[v] = i end
@@ -211,7 +237,7 @@ local function AddSeasonBadge(self)
 		local season = DST and GLOBAL.TheWorld.state.season or GLOBAL.GetSeasonManager():GetSeason()
 		local days = DST
 			and GLOBAL.TheWorld.state.remainingdaysinseason
-			or GLOBAL.GetSeasonManager():GetDaysLeftInSeason()
+			or (1-GLOBAL.GetSeasonManager().percent_season) * GLOBAL.GetSeasonManager():GetSeasonLength()
 		days = math.floor(days+0.5)
 		if focused and not MICROSEASONS then -- show days left until next season
 			local season_i = season_lookup[season]
@@ -271,7 +297,7 @@ local function ControlsPostConstruct(self)
 		self.clock[text]:SetScale(.8, .8, 0)
 	end
 	if SHOWSEASONCLOCK then
-		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST))
+		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions))
 		self.seasonclock:SetPosition(50, 10)
 		self.seasonclock:SetScale(0.8, 0.8, 0.8)
 		self.clock:SetPosition(-50, 10)
