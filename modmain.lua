@@ -13,7 +13,7 @@ local function CheckDlcEnabled(dlc)
 	return GLOBAL.IsDLCEnabled(GLOBAL[dlc])
 end
 
-local DST = GLOBAL.TheSim:GetGameID() == "DST"
+local DST = GLOBAL.TheSim.GetGameID ~= nil and GLOBAL.TheSim:GetGameID() == "DST"
 local ROG = DST or CheckDlcEnabled("REIGN_OF_GIANTS")
 local CSW = CheckDlcEnabled("CAPY_DLC")
 
