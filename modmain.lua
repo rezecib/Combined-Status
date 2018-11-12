@@ -6,9 +6,16 @@ Assets = {
 	Asset("ANIM", "anim/moon_waning_phases.zip"),
 }
 
+local function CheckDlcEnabled(dlc)
+	-- if the constant doesn't even exist, then they can't have the DLC
+	if not GLOBAL.rawget(GLOBAL, dlc) then return false end
+	GLOBAL.assert(GLOBAL.rawget(GLOBAL, "IsDLCEnabled"), "Old version of game, please update (IsDLCEnabled function missing)")
+	return GLOBAL.IsDLCEnabled(GLOBAL[dlc])
+end
+
 local DST = GLOBAL.TheSim:GetGameID() == "DST"
-local ROG = DST or GLOBAL.IsDLCEnabled(GLOBAL.REIGN_OF_GIANTS)
-local CSW = GLOBAL.rawget(GLOBAL, "CAPY_DLC") and GLOBAL.IsDLCEnabled(GLOBAL.CAPY_DLC)
+local ROG = DST or CheckDlcEnabled("REIGN_OF_GIANTS")
+local CSW = CheckDlcEnabled("CAPY_DLC")
 
 local SHOWSTATNUMBERS = GetModConfigData("SHOWSTATNUMBERS")
 local SHOWMAXONNUMBERS = GetModConfigData("SHOWMAXONNUMBERS")
