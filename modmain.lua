@@ -191,6 +191,10 @@ local function FindSeasonTransitions()
 			table.insert(season_trans, season)
 		end
 	end
+	-- Vanilla DS doesn't use the "seasonenabled" vars on its SeasonManager
+	if #season_trans == 0 then
+		season_trans = {"summer", "winter"}
+	end
 	return season_trans
 end
 
@@ -221,7 +225,6 @@ local function AddSeasonBadge(self)
 		-- weird seasons with long names might require smaller text, check and adjust
 		local longest_season_str = 0
 		for i, season in ipairs(season_trans) do
-			print("season:", season, "string:", GLOBAL.STRINGS.UI.SANDBOXMENU[season:upper()])
 			longest_season_str = math.max(longest_season_str, GLOBAL.STRINGS.UI.SANDBOXMENU[season:upper()]:len())
 		end
 		if longest_season_str > 6 then
