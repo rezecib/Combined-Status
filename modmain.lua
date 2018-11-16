@@ -507,7 +507,25 @@ AddClassPostConstruct("widgets/statusdisplays", StatusPostConstruct)
 
 local function UIClockPostInit(self)	
 	if DST then
-		GLOBAL.STRINGS.UI.HUD.WORLD_CLOCKDAY = "World\nDay"
+		-- Replace GLOBAL.STRINGS.UI.HUD with a proxy table that uses a metatable to intercept accesses to it
+		-- this allows us to construct WORLD_CLOCKDAY from the current contents of WORLD and WORLD_CLOCKDAY
+		local HUD_original = GLOBAL.STRINGS.UI.HUD
+		local HUD_proxy = {}
+		local HUD_metatable = {
+			__index = function(t, k)
+				-- someone asked for the value for k from this table; compose for clockdays and pass through for others
+				if k == "WORLD_CLOCKDAY" or k == "WORLD_CLOCKDAY_V2" then
+					return HUD_original.WORLD .. "\n" .. HUD_original[k]
+				end
+				return HUD_original[k]
+			end,
+			__newindex = function(t, k, v)
+				-- someone assigned to this table; pass it through to the original
+				HUD_original[k] = v
+			end,
+		}
+		GLOBAL.setmetatable(HUD_proxy, HUD_metatable)
+		GLOBAL.STRINGS.UI.HUD = HUD_proxy
 	
 		if self._cave then return end
 		
