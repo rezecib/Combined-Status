@@ -505,8 +505,11 @@ local function StatusPostConstruct(self)
 end
 AddClassPostConstruct("widgets/statusdisplays", StatusPostConstruct)
 
-local function UIClockPostInit(self)	
-	if DST then
+local has_proxied_world_clock_day = false
+local function ProxyWorldClockDay()
+	if not has_proxied_world_clock_day then
+		has_proxied_world_clock_day = true
+		
 		-- Replace GLOBAL.STRINGS.UI.HUD with a proxy table that uses a metatable to intercept accesses to it
 		-- this allows us to construct WORLD_CLOCKDAY from the current contents of WORLD and WORLD_CLOCKDAY
 		local HUD_original = GLOBAL.STRINGS.UI.HUD
@@ -526,6 +529,12 @@ local function UIClockPostInit(self)
 		}
 		GLOBAL.setmetatable(HUD_proxy, HUD_metatable)
 		GLOBAL.STRINGS.UI.HUD = HUD_proxy
+	end
+end
+
+local function UIClockPostInit(self)	
+	if DST then
+		ProxyWorldClockDay()
 	
 		if self._cave then return end
 		
