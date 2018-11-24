@@ -189,6 +189,7 @@ configuration_options =
 		label = "Stat Numbers",
 		hover = "Show the health, hunger, and sanity numbers.",
 		options =	{
+						{description = "Current/Max", data = "Detailed"},
 						{description = "Always", data = true},
 						{description = "Hover", data = false},
 					},

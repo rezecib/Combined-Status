@@ -19,6 +19,7 @@ local CSW = CheckDlcEnabled("CAPY_DLC")
 local HML = CheckDlcEnabled("PORKLAND_DLC")
 
 local SHOWSTATNUMBERS = GetModConfigData("SHOWSTATNUMBERS")
+local SHOWDETAILEDSTATNUMBERS = SHOWSTATNUMBERS == "Detailed"
 local SHOWMAXONNUMBERS = GetModConfigData("SHOWMAXONNUMBERS")
 local SHOWTEMPERATURE = GetModConfigData("SHOWTEMPERATURE")
 local SHOWNAUGHTINESS = GetModConfigData("SHOWNAUGHTINESS") and not DST
@@ -87,12 +88,12 @@ local function BadgePostConstruct(self)
 	if not SHOWSTATNUMBERS then return end
 	
 	self.bg = self:AddChild(Image("images/status_bgs.xml", "status_bgs.tex"))
-	self.bg:SetScale(.4,.43,0)
+	self.bg:SetScale(SHOWDETAILEDSTATNUMBERS and 0.55 or .4,.43,0)
 	self.bg:SetPosition(-.5, -40, 0)
 	
 	self.num:SetFont(GLOBAL.NUMBERFONT)
-	self.num:SetSize(28)
-	self.num:SetPosition(3.5, -40.5, 0)
+	self.num:SetSize(SHOWDETAILEDSTATNUMBERS and 20 or 28)
+	self.num:SetPosition(2, -40.5, 0)
 	self.num:SetScale(1,.78,1)
 
 	self.num:MoveToFront()
@@ -123,6 +124,9 @@ local function BadgePostConstruct(self)
 		function self:SetPercent(val, max, ...)
 			self.maxnum:SetString(maxtxt..tostring(math.ceil(max or 100)))
 			OldSetPercent(self, val, max, ...)
+			if SHOWDETAILEDSTATNUMBERS then
+				self.num:SetString(self.num:GetString().."/"..max)
+			end
 		end
 	end
 	
@@ -132,8 +136,12 @@ local function BadgePostConstruct(self)
 		function self:SetValue(val, max, ...)
 			self.maxnum:SetString(maxtxt..tostring(math.ceil(max)))
 			OldSetValue(self, val, max, ...)
+			if SHOWDETAILEDSTATNUMBERS and val > 0 then
+				self.num:SetString(self.num:GetString().."/"..max)
+			end
 		end
 	end
+
 end
 AddClassPostConstruct("widgets/badge", BadgePostConstruct)
 
@@ -142,8 +150,8 @@ local function BoatBadgePostConstruct(self)
 	self.bg:SetPosition(-.5, nudge-40)
 	
 	self.num:SetFont(GLOBAL.NUMBERFONT)
-	self.num:SetSize(28)
-	self.num:SetPosition(3.5, nudge-40.5)
+	self.num:SetSize(SHOWDETAILEDSTATNUMBERS and 20 or 28)
+	self.num:SetPosition(2, nudge-40.5)
 	self.num:SetScale(1,.78,1)
 	self.num:MoveToFront()
 	self.num:Show()
@@ -762,3 +770,19 @@ AddClassPostConstruct("screens/playerhud", function(self)
 		end)
 	end
 end)
+
+local PlayerHud = require("screens/playerhud")
+local PlayerHud_OpenControllerInventory = PlayerHud.OpenControllerInventory
+function PlayerHud:OpenControllerInventory(...)
+	PlayerHud_OpenControllerInventory(self, ...)
+	if SHOWSEASONCLOCK then
+		self.controls.seasonclock:UpdateRemainingString()
+	end
+end
+local PlayerHud_CloseControllerInventory = PlayerHud.CloseControllerInventory
+function PlayerHud:CloseControllerInventory(...)
+	PlayerHud_CloseControllerInventory(self, ...)
+	if SHOWSEASONCLOCK then
+		self.controls.seasonclock:UpdateSeasonString()
+	end
+end
