@@ -168,7 +168,9 @@ function SeasonClock:UpdateRemainingString()
 		-- days_left = GetSeasonManager():GetDaysLeftInSeason()
 		days_left = (1-GetSeasonManager().percent_season) * GetSeasonManager():GetSeasonLength()
 	end
-    self._text:SetString(math.floor(days_left+0.5) .. " days\nleft")
+	-- unfortunately no good string to capture translations of "left"
+	local days_str = STRINGS.UI.HUD.CLOCKDAYS or STRINGS.UI.DEATHSCREEN.DAYS
+    self._text:SetString(math.floor(days_left+0.5) .. " " .. days_str:lower() .. "\n" .. "left")
     self._showingseasons = false
 end
 
