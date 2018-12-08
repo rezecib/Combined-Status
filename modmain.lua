@@ -191,7 +191,7 @@ local function FindSeasonTransitions()
 	local season_orders = {
 		"autumn", "winter", "spring", "summer",
 		"mild", "wet", "green", "dry",
-		"temperate", "humid", "lush", -- "aporkalypse",
+		"temperate", "humid", "lush",
 	}
 	for i, season in ipairs(season_orders) do
 		if GLOBAL.GetSeasonManager()[season .. "enabled"] then -- or GLOBAL.GetSeasonManager()[season .. "_enabled"] then
@@ -253,9 +253,9 @@ local function AddSeasonBadge(self)
 			local season_i = season_lookup[season]
 			local season_length = 0
 			if season_i == nil then --The current season wasn't in our list of current seasons
-				self.season.num:SetString("FAILED") --Let the user know something is wrong
-				self.inst:DoTaskInTime(0, function() self.season.UpdateText(focused) end) --Try again next tick
-				return --Don't continue with the bad data
+				-- this happens during the Aporkalypse,
+				-- because it's technically a season but not part of the normal ordering
+				return -- we don't have anything to display, so don't change the text at all
 			end
 			repeat
 				season_i = season_i%#season_trans + 1
@@ -270,9 +270,13 @@ local function AddSeasonBadge(self)
 			local seasonstr = DST
 				and GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[season:upper()]
 				or GLOBAL.STRINGS.UI.SANDBOXMENU[season:upper()]
+			if seasonstr == nil or seasonstr == "" then
+				-- attempt to capitalize it (e.g. for Aporkalypse which has no user-facing string)
+				seasonstr = season:sub(1,1):upper() .. season:sub(2):lower()
+			end
 			local total = DST
 				and GLOBAL.TheWorld.state[season .. "length"]
-				or GLOBAL.GetSeasonManager()[season .. "length"]
+				or GLOBAL.GetSeasonManager():GetSeasonLength()
 			if MICROSEASONS then
 				if focused then
 					self.season.num:SetString(seasonstr)
