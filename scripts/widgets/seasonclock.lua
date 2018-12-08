@@ -154,6 +154,10 @@ function SeasonClock:UpdateSeasonString()
 			self:Hide()
 		end
 		str = STRINGS.UI.SANDBOXMENU[season:upper()]
+		if str == nil or str == "" then
+			-- attempt to capitalize it (e.g. for Aporkalypse which has no user-facing string)
+			str = season:sub(1,1):upper() .. season:sub(2):lower()
+		end
 	end
 	self._text:SetString(str)
     self._showingseasons = true
@@ -277,7 +281,13 @@ end
 function SeasonClock:OnCyclesChanged(data)
 	local progress = 0
 	local i = 1
-	local season = self._dst and TheWorld.state.season or GetSeasonManager():GetSeasonString()
+	local season = self._dst and TheWorld.state.season or GetSeasonManager():GetSeason()
+	local aporkalypse = false
+	if SEASONS.APORKALYPSE and season == SEASONS.APORKALYPSE then
+		-- Aporkalypse doesn't have a place on the clock, so use the previous "paused" season
+		season = GetSeasonManager().pre_aporkalypse_season or SEASONS.TEMPERATE
+		aporkalypse = true
+	end
 	while season ~= self.seasons[i] and self.seasons[i] do
 		progress = progress + self.seasonsegments[self.seasons[i]]
 		i = i + 1
@@ -288,8 +298,15 @@ function SeasonClock:OnCyclesChanged(data)
 		return -- Don't continue with the bad data
 	end
 	local segments = self.seasonsegments[season]
-	local elapsed = self._dst and TheWorld.state.elapseddaysinseason or (GetSeasonManager().percent_season * GetSeasonManager():GetSeasonLength())
-	progress = progress + segments*elapsed/self:GetSeasonLength(season)
+	local percent = 0
+	if self._dst then
+		percent = TheWorld.state.elapseddaysinseason/self:GetSeasonLength(season)
+	elseif aporkalypse then
+		percent = GetSeasonManager().pre_aporkalypse_percent or percent
+	else
+		percent = GetSeasonManager().percent_season
+	end
+	progress = progress + segments*percent
 	progress = progress / NUM_SEGS
 	self._hands:SetRotation(progress*360)
     if self._showingseasons then
