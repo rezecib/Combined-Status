@@ -745,6 +745,10 @@ if not DST and SHOWWANINGMOON then
 		}
 		
 		function self:GetMoonPhase()
+			if self.bloodmoon_active then
+				return "full"
+			end
+			
 			local phaselength = 2
 			local n = #moonphases-1
 			
