@@ -4,6 +4,7 @@ Assets = {
 	
 	--Note that the default behavior actually uses these for waxing, based on N Hemisphere moon
 	Asset("ANIM", "anim/moon_waning_phases.zip"),
+	Asset("ANIM", "anim/moon_aporkalypse_waning_phases.zip"),
 }
 
 local function CheckDlcEnabled(dlc)
@@ -33,8 +34,6 @@ local SHOWMOONDUSK = SHOWMOON > 0
 local SHOWWANINGMOON = GetModConfigData("SHOWWANINGMOON")
 local SHOWNEXTFULLMOON = GetModConfigData("SHOWNEXTFULLMOON")
 local FLIPMOON = GetModConfigData("FLIPMOON")
-local waxingmoonanim = FLIPMOON and "moon_phases" or "moon_waning_phases"
-local waningmoonanim = FLIPMOON and "moon_waning_phases" or "moon_phases"
 local UNIT = GetModConfigData("UNIT")
 local SEASONOPTIONS = GetModConfigData("SEASONOPTIONS")
 local SHOWSEASONCLOCK = SEASONOPTIONS == "Clock"
@@ -664,26 +663,6 @@ local function UIClockPostInit(self)
 		end
 	
 		-- Moon stuff
-		if SHOWMOONDAY then
-		
-			self:ShowMoon()
-			
-			self.inst:ListenForEvent( "daytime", function(inst, data) 
-				self:ShowMoon()
-			end, GLOBAL.GetWorld())
-			
-		elseif SHOWMOONDUSK then
-		
-			if GLOBAL.GetClock():IsDusk() then
-				self:ShowMoon()
-			end
-			
-			self.inst:ListenForEvent( "dusktime", function(inst, data) 
-				self:ShowMoon()
-			end, GLOBAL.GetWorld())
-		
-		end
-		
 		local moon_syms = 
 		{
 			new="moon_new",
@@ -696,13 +675,35 @@ local function UIClockPostInit(self)
 		function self:ShowMoon()
 			local phase, waning = GLOBAL.GetClock():GetMoonPhase()
 			local sym = moon_syms[phase]
-			if SHOWWANINGMOON and waning then
-				self.moonanim:GetAnimState():OverrideSymbol("swap_moon", waningmoonanim, sym or "moon_full")
-			else
-				self.moonanim:GetAnimState():OverrideSymbol("swap_moon", waxingmoonanim, sym or "moon_full")
+			
+			local moon_build = "moon_"
+			local aporkalypse = HML and GLOBAL.GetAporkalypse()
+			if aporkalypse and aporkalypse:IsActive() then
+				moon_build = moon_build .. "aporkalypse_"
 			end
+			if (SHOWWANINGMOON and waning) == FLIPMOON then
+				moon_build = moon_build .. "waning_"
+			end
+			moon_build = moon_build .. "phases"
+			
+			self.moonanim:GetAnimState():OverrideSymbol("swap_moon", moon_build, sym or "moon_full")
 			self.moonanim:GetAnimState():PlayAnimation("trans_out") 
 			self.moonanim:GetAnimState():PushAnimation("idle", true) 
+		end
+		
+		if SHOWMOONDAY or GLOBAL.GetClock():IsNight() or (SHOWMOONDUSK and GLOBAL.GetClock():IsDusk()) then
+			self:ShowMoon()
+		end
+		
+		if SHOWMOONDAY then
+			self.inst:ListenForEvent( "daytime", function(inst, data) 
+				self:ShowMoon()
+			end, GLOBAL.GetWorld())
+		elseif SHOWMOONDUSK then
+			self.inst:ListenForEvent( "dusktime", function(inst, data) 
+				self:ShowMoon()
+			end, GLOBAL.GetWorld())
+		
 		end
 		
 		if SHOWNEXTFULLMOON then
