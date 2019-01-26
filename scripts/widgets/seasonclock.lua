@@ -112,13 +112,60 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 	
     self:OnSeasonLengthsChanged()
 	self:OnCyclesChanged()
-
+	
     --Register events
 	if self._dst then
-		self.inst:ListenForEvent("seasontick", function(inst, data) self:OnCyclesChanged(data) end, TheWorld)
-		self.inst:ListenForEvent("seasonlengthschanged", function(inst, data) self:OnSeasonLengthsChanged(data) end, TheWorld)
-		self.inst:ListenForEvent("phasechanged", function(inst, data) self:OnPhaseChanged(data) end, TheWorld)
+		local function listen_for_event_delayed(event, fn)
+			self.inst:ListenForEvent(event, function(inst, data)
+				TheWorld:DoTaskInTime(0, function()
+					fn(self, data)
+				end)
+			end, TheWorld)
+		end
+		listen_for_event_delayed("seasontick", self.OnCyclesChanged)
+		listen_for_event_delayed("seasonlengthschanged", self.OnSeasonLengthsChanged)
+		listen_for_event_delayed("phasechanged", self.OnPhaseChanged)
 	else
+		--Because SeasonManager doesn't push events when season lengths are changed,
+		-- we add an interceptor to the SeasonManager to catch the variable assignment (gross...)
+		
+		local seasonmanager = GetSeasonManager()
+		local sm_seasonlengths = {}
+		
+		-- move the existing season lengths into our local table
+		for key,val in pairs(seasonmanager) do
+			if type(key) == "string" and key:match("length$") then
+				sm_seasonlengths[key] = val
+				seasonmanager[key] = nil
+			end
+		end
+
+		-- intercept table accesses so season lengths are read from our table
+		-- (this is needed so that assignments can be intercepted)
+		local sm_mt = getmetatable(seasonmanager)
+		local sm_mt_index = sm_mt.__index
+		sm_mt.__index = function(sm, key)
+			-- someone tried to get a season length, return from our local table (and fall back to the original __index)
+			return sm_seasonlengths[key] 
+				or (type(sm_mt_index) == "table" and sm_mt_index[key])
+				or (type(sm_mt_index) == "function" and sm_mt_index(sm, key))
+		end
+		
+		-- intercept table assignment so we know when season lengths change
+		local sm_mt_newindex = sm_mt.__newindex
+		sm_mt.__newindex = function(sm, key, val)
+			if type(key) == "string" and key:match("length$") then
+				-- someone tried to assign a seasonlength, capture and store it in our local table
+				sm_seasonlengths[key] = val
+				-- and then update the season clock
+				self:OnSeasonLengthsChanged()
+			elseif sm_mt_newindex then -- fall back to original __newindex, if present
+				sm_mt_newindex(sm, key, val)
+			else -- and finally fall back to a normal set
+				rawset(sm, key, val)
+			end			
+		end
+		
 		self.inst:ListenForEvent("daycomplete", function(inst, data) self:OnCyclesChanged() self:UpdateSeasonString() end, GetWorld())
 		self.inst:ListenForEvent("seasonChange", function() self:UpdateSeasonString() self:OnSeasonLengthsChanged() end, GetWorld())
 		if not self._cave then
@@ -276,6 +323,10 @@ function SeasonClock:OnSeasonLengthsChanged(data)
 
 		seg:SetTint(color.x, color.y, color.z, 1)
     end
+	-- Although the seasons component pushes a seasontick after seasonlengthschanged,
+	-- the delay we have on the event listener can cause them to get out of order
+	-- since it's not really that expensive, just run it again to ensure it has the right numbers
+	self:OnCyclesChanged()
 end
 
 function SeasonClock:OnCyclesChanged(data)
@@ -300,7 +351,7 @@ function SeasonClock:OnCyclesChanged(data)
 	local segments = self.seasonsegments[season]
 	local percent = 0
 	if self._dst then
-		percent = TheWorld.state.elapseddaysinseason/self:GetSeasonLength(season)
+		percent = 1 - TheWorld.state.remainingdaysinseason/math.max(TheWorld.state.remainingdaysinseason, self:GetSeasonLength(season))
 	elseif aporkalypse then
 		percent = GetSeasonManager().pre_aporkalypse_percent or percent
 	else
