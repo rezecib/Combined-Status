@@ -76,6 +76,7 @@ if not DST then
 end
 local Badge = require("widgets/badge")
 
+local badges = {}
 local function BadgePostConstruct(self)
 	self:SetScale(.9,.9,.9)
 	-- Make sure that badge scaling animations are adjusted accordingly (e.g. WX's upgrade animation)
@@ -98,6 +99,7 @@ local function BadgePostConstruct(self)
 	self.num:MoveToFront()
 	self.num:Show()
 
+	badges[self] = self
 	self.maxnum = self:AddChild(Text(GLOBAL.NUMBERFONT, SHOWMAXONNUMBERS and 25 or 33))
 	self.maxnum:SetPosition(6, 0, 0)
 	self.maxnum:MoveToFront()
@@ -328,10 +330,7 @@ local function ControlsPostConstruct(self)
 		end
 		self.status:SetPosition(0, -110)
 	end
-	
-	--fixes numbers being hidden when controller crafting is opened
-	self.HideStatusNumbers = function() end	
-	
+		
 	local _SetHUDSize = self.SetHUDSize
 	function self:SetHUDSize()
 		_SetHUDSize(self)
@@ -339,6 +338,25 @@ local function ControlsPostConstruct(self)
 		self.topright_root:SetScale(scale)
 	end
 	self:SetHUDSize()
+	
+	-- Show/hide maxnum but not num when asked to show/hide (e.g. for Controller Inventory)
+	local statusholder = DST and self.status or self
+	_ShowStatusNumbers = statusholder.ShowStatusNumbers
+	function statusholder:ShowStatusNumbers(...)
+		_ShowStatusNumbers(self, ...)
+		for _,badge in pairs(badges) do
+			if badge and badge.maxnum then
+				badge.maxnum:Show()
+			end
+		end
+	end
+	function statusholder:HideStatusNumbers()
+		for _,badge in pairs(badges) do
+			if badge and badge.maxnum then
+				badge.maxnum:Hide()
+			end
+		end
+	end	
 end
 if not DST or GLOBAL.TheNet:GetServerGameMode() ~= "lavaarena" then
 	AddClassPostConstruct("widgets/controls", ControlsPostConstruct)
@@ -505,7 +523,7 @@ local function StatusPostConstruct(self)
 		end, self.owner)
 		self.owner.components.beaverness:DoDelta(0, true)
 	end
-	
+		
 	-- Puppy Princess Musha badge fix
 	self.inst:DoTaskInTime(5, function()
 		if self.staminab and self.staminab.bg then
@@ -546,7 +564,7 @@ end
 local function UIClockPostInit(self)	
 	if DST then
 		ProxyWorldClockDay()
-	
+		
 		if self._cave then return end
 		
 		--copied code below from components/clock.lua; make sure it stays up-to-date
@@ -784,6 +802,9 @@ local PlayerHud = require("screens/playerhud")
 local PlayerHud_OpenControllerInventory = PlayerHud.OpenControllerInventory
 function PlayerHud:OpenControllerInventory(...)
 	PlayerHud_OpenControllerInventory(self, ...)
+	if self.controls.clock then
+		self.controls.clock:OnGainFocus()
+	end
 	if SHOWSEASONCLOCK then
 		self.controls.seasonclock:UpdateRemainingString()
 	end
@@ -791,6 +812,9 @@ end
 local PlayerHud_CloseControllerInventory = PlayerHud.CloseControllerInventory
 function PlayerHud:CloseControllerInventory(...)
 	PlayerHud_CloseControllerInventory(self, ...)
+	if self.controls.clock then
+		self.controls.clock:OnLoseFocus()
+	end
 	if SHOWSEASONCLOCK then
 		self.controls.seasonclock:UpdateSeasonString()
 	end
