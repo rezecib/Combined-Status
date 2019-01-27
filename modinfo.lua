@@ -206,6 +206,16 @@ configuration_options =
 		default = true,
 	},	
 	{
+		name = "SHOWCLOCKTEXT",
+		label = "Show Clock Text",
+		hover = "Show the text on the clock (day number) and season clock (current season).\nIf hidden, the text will only be shown when hovering over.",
+		options =	{
+						{description = "Show", data = true},
+						{description = "Hide", data = false},
+					},
+		default = true,
+	},	
+	{
 		name = "HUDSCALEFACTOR",
 		label = "HUD Scale",
 		hover = "Lets you adjust the size of the badges and clocks independently of the rest of the game HUD scale.",

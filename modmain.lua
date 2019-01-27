@@ -22,6 +22,7 @@ local HML = CheckDlcEnabled("PORKLAND_DLC")
 local SHOWSTATNUMBERS = GetModConfigData("SHOWSTATNUMBERS")
 local SHOWDETAILEDSTATNUMBERS = SHOWSTATNUMBERS == "Detailed"
 local SHOWMAXONNUMBERS = GetModConfigData("SHOWMAXONNUMBERS")
+local SHOWCLOCKTEXT = GetModConfigData("SHOWCLOCKTEXT") ~= false
 local SHOWTEMPERATURE = GetModConfigData("SHOWTEMPERATURE")
 local SHOWNAUGHTINESS = GetModConfigData("SHOWNAUGHTINESS") and not DST
 local SHOWWORLDTEMP = GetModConfigData("SHOWWORLDTEMP")
@@ -67,6 +68,25 @@ local require = GLOBAL.require
 local Widget = require('widgets/widget')
 local Image = require('widgets/image')
 local Text = require('widgets/text')
+if not DST then
+	-- Need to make font and size available
+	_Text_SetFont = Text.SetFont
+	function Text:SetFont(font, ...)
+		_Text_SetFont(self, font, ...)
+		self.font = font
+	end
+	_Text_SetSize = Text.SetSize
+	function Text:SetSize(size, ...)
+		_Text_SetSize(self, size, ...)
+		self.size = size
+	end
+	_Text_ctor = Text._ctor
+	function Text:_ctor(font, size, ...)
+		_Text_ctor(self, font, size, ...)
+		self:SetFont(font)
+		self:SetSize(size)
+	end
+end
 local PlayerBadge = require("widgets/playerbadge" .. (DST and "" or "_combined_status"))
 local Minibadge = require("widgets/minibadge")
 if not DST then
@@ -308,12 +328,12 @@ local function ControlsPostConstruct(self)
 		self.clock.text_upper:SetScale(.8, .8, 0)
 		self.clock.text_lower:SetScale(.8, .8, 0)
 	else
-		local text = (DST and "_" or "") .. "text"
+		local text = DST and "_text" or "text"
 		self.clock[text]:SetPosition(5, 0)
 		self.clock[text]:SetScale(.8, .8, 0)
 	end
 	if SHOWSEASONCLOCK then
-		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions))
+		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT))
 		self.seasonclock:SetPosition(50, 10)
 		self.seasonclock:SetScale(0.8, 0.8, 0.8)
 		self.clock:SetPosition(-50, 10)
@@ -561,7 +581,100 @@ local function ProxyWorldClockDay()
 	end
 end
 
-local function UIClockPostInit(self)	
+local function UIClockPostInit(self)
+	if not SHOWCLOCKTEXT then
+		if CSW or HML then
+			-- These have a different clock string approach that does an animation to show all text on hover
+			-- So we just need to show/hide on focus gained/lost
+			self.AnimateDayString = function() end
+			if self.animate_task ~= nil then
+				self.animate_task:Cancel()
+			end
+			self.text_upper:SetPosition(5, 15, 0)
+			self.text_lower:SetPosition(5, -15, 0)
+			self.text_upper:Hide()
+			self.text_lower:Hide()
+			local _UIClock_OnGainFocus = self.OnGainFocus
+			function self:OnGainFocus(...)
+				_UIClock_OnGainFocus(self, ...)
+				self:UpdateDayString()
+				self.text_upper:Show()
+				self.text_lower:Show()
+				return true
+			end
+			local _UIClock_OnLoseFocus = self.OnLoseFocus
+			function self:OnLoseFocus(...)
+				_UIClock_OnLoseFocus(self, ...)
+				self.text_upper:Hide()
+				self.text_lower:Hide()
+				return true
+			end
+		else
+			-- In Vanilla, RoG, and DST we need something fancier
+			-- Change UpdateDayString and UpdateWorldString to write to a fake invisible Text,
+			-- so we can capture the output strings to assemble the one we want
+			local text = DST and "_text" or "text"
+			local text_proxy = Text(self[text].font, self[text].size)
+			local day_text = ""
+			local world_text = ""
+			local function BuildString()
+				self[text]:SetString(day_text .. "\n" .. world_text)
+			end
+			text_proxy:Hide()
+			if DST then
+				self[text]:SetSize(text_proxy.size*0.75)
+			end
+			self[text]:Hide()
+			local _UIClock_UpdateDayString = self.UpdateDayString
+			function self:UpdateDayString(...)
+				local _text = self[text]
+				self[text] = text_proxy
+				_UIClock_UpdateDayString(self, ...)
+				self[text] = _text
+				day_text = text_proxy:GetString()
+				BuildString()
+			end
+			if DST then
+				local _UIClock_UpdateWorldString = self.UpdateWorldString
+				function self:UpdateWorldString(...)
+					local _text = self[text]
+					self[text] = text_proxy
+					_UIClock_UpdateWorldString(self, ...)
+					self[text] = _text
+					world_text = text_proxy:GetString()
+					BuildString()
+				end
+			end
+			-- Then change the OnGainFocus and OnLoseFocus to show/hide the text we want
+			local _UIClock_OnGainFocus = self.OnGainFocus
+			function self:OnGainFocus(...)
+				-- this one is a bit messy because DST has UpdateWorldString,
+				-- but V/RoG do it all in the OnGainFocus...
+				local _text = self[text]
+				if not DST then
+					self[text] = text_proxy
+				end
+				_UIClock_OnGainFocus(self, ...)
+				if DST then
+					self:UpdateWorldString()
+				else
+					self[text] = _text
+					world_text = text_proxy:GetString()
+					self:UpdateDayString()
+					BuildString()
+				end
+				self[text]:Show()
+				return true
+			end
+			local _UIClock_OnLoseFocus = self.OnLoseFocus
+			function self:OnLoseFocus(...)
+				_UIClock_OnLoseFocus(self, ...)
+				self[text]:Hide()
+				return true
+			end
+		end
+	end
+	
 	if DST then
 		ProxyWorldClockDay()
 		
@@ -806,7 +919,7 @@ function PlayerHud:OpenControllerInventory(...)
 		self.controls.clock:OnGainFocus()
 	end
 	if SHOWSEASONCLOCK then
-		self.controls.seasonclock:UpdateRemainingString()
+		self.controls.seasonclock:OnGainFocus()
 	end
 end
 local PlayerHud_CloseControllerInventory = PlayerHud.CloseControllerInventory
@@ -816,6 +929,6 @@ function PlayerHud:CloseControllerInventory(...)
 		self.controls.clock:OnLoseFocus()
 	end
 	if SHOWSEASONCLOCK then
-		self.controls.seasonclock:UpdateSeasonString()
+		self.controls.seasonclock:OnLoseFocus()
 	end
 end

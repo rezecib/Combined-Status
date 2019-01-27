@@ -37,7 +37,7 @@ local DARKEN_PERCENT = .75
 --------------------------------------------------------------------------
 --[[ Constructor ]]
 --------------------------------------------------------------------------
-local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition_fn)
+local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition_fn, show_clock_text)
     Widget._ctor(self, "SeasonClock")
 
     --Member variables
@@ -52,11 +52,12 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
     self._rim = nil
     self._hands = nil
     self._text = nil
-    self._showingseasons = nil
+    self._have_focus = nil
     self._cycles = nil
     self._phase = nil
     self._time = nil
 	self._old_t = 0
+	self._show_clock_text = show_clock_text ~= false
 
     local basescale = 1
     self:SetScale(basescale, basescale, basescale)
@@ -104,11 +105,11 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 		self._hands:SetClickable(false)
 	end
 
-    self._text = self:AddChild(Text(BODYTEXTFONT, 33 / basescale))
+    self._text = self:AddChild(Text(BODYTEXTFONT, (self._show_clock_text and 1 or 0.75) * 33 / basescale))
     self._text:SetPosition(5, 0 / basescale, 0)
 
     --Default initialization
-    self:UpdateSeasonString()
+    self:OnLoseFocus()
 	
     self:OnSeasonLengthsChanged()
 	self:OnCyclesChanged()
@@ -166,8 +167,22 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 			end			
 		end
 		
-		self.inst:ListenForEvent("daycomplete", function(inst, data) self:OnCyclesChanged() self:UpdateSeasonString() end, GetWorld())
-		self.inst:ListenForEvent("seasonChange", function() self:UpdateSeasonString() self:OnSeasonLengthsChanged() end, GetWorld())
+		self.inst:ListenForEvent("daycomplete", function(inst, data)
+			self:OnCyclesChanged()
+			if self._have_focus then
+				self:OnGainFocus()
+			else
+				self:OnLoseFocus()
+			end
+		end, GetWorld())
+		self.inst:ListenForEvent("seasonChange", function()
+			self:OnSeasonLengthsChanged()
+			if self._have_focus then
+				self:OnGainFocus()
+			else
+				self:OnLoseFocus()
+			end
+		end, GetWorld())
 		if not self._cave then
 			self.inst:ListenForEvent("daytime", function(inst, data) self:OnPhaseChanged("day") end, GetWorld())
 			self.inst:ListenForEvent("dusktime", function(inst, data) self:OnPhaseChanged("dusk") end, GetWorld())
@@ -191,7 +206,7 @@ end)
 --[[ Member functions ]]
 --------------------------------------------------------------------------
 
-function SeasonClock:UpdateSeasonString()
+function SeasonClock:GetSeasonString()
 	local str = ""
 	if self._dst then
 		str = STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[TheWorld.state.season:upper()]
@@ -206,11 +221,10 @@ function SeasonClock:UpdateSeasonString()
 			str = season:sub(1,1):upper() .. season:sub(2):lower()
 		end
 	end
-	self._text:SetString(str)
-    self._showingseasons = true
+	return str
 end
 
-function SeasonClock:UpdateRemainingString()
+function SeasonClock:GetRemainingString()
 	local days_left = ""
 	if self._dst then
 		days_left = TheWorld.state.remainingdaysinseason
@@ -221,8 +235,7 @@ function SeasonClock:UpdateRemainingString()
 	end
 	-- unfortunately no good string to capture translations of "left"
 	local days_str = STRINGS.UI.HUD.CLOCKDAYS or STRINGS.UI.DEATHSCREEN.DAYS
-    self._text:SetString(math.floor(days_left+0.5) .. " " .. days_str:lower() .. "\n" .. "left")
-    self._showingseasons = false
+    return math.floor(days_left+0.5) .. " " .. days_str:lower() .. "\n" .. "left"
 end
 
 --------------------------------------------------------------------------
@@ -231,13 +244,24 @@ end
 
 function SeasonClock:OnGainFocus()
     SeasonClock._base.OnGainFocus(self)
-    self:UpdateRemainingString()
+	if self._show_clock_text then
+		self._text:SetString(self:GetRemainingString())
+	else
+		self._text:Show()
+		self._text:SetString(self:GetSeasonString() .. "\n" .. self:GetRemainingString())
+	end
+	self._have_focus = true	
     return true
 end
 
 function SeasonClock:OnLoseFocus()
     SeasonClock._base.OnLoseFocus(self)
-    self:UpdateSeasonString()
+	if self._show_clock_text then
+		self._text:SetString(self:GetSeasonString())
+	else
+		self._text:Hide()
+	end
+	self._have_focus = false
     return true
 end
 
@@ -360,10 +384,10 @@ function SeasonClock:OnCyclesChanged(data)
 	progress = progress + segments*percent
 	progress = progress / NUM_SEGS
 	self._hands:SetRotation(progress*360)
-    if self._showingseasons then
-        self:UpdateSeasonString()
+    if self._have_focus then
+		self:OnGainFocus()
 	else
-		self:UpdateRemainingString()
+        self:OnLoseFocus()
     end
 end
 
