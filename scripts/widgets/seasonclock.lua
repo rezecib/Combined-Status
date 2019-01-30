@@ -37,7 +37,7 @@ local DARKEN_PERCENT = .75
 --------------------------------------------------------------------------
 --[[ Constructor ]]
 --------------------------------------------------------------------------
-local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition_fn, show_clock_text)
+local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition_fn, show_clock_text, chinese_translation)
     Widget._ctor(self, "SeasonClock")
 
     --Member variables
@@ -58,6 +58,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
     self._time = nil
 	self._old_t = 0
 	self._show_clock_text = show_clock_text ~= false
+	self._chinese = chinese_translation
 
     local basescale = 1
     self:SetScale(basescale, basescale, basescale)
@@ -105,7 +106,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 		self._hands:SetClickable(false)
 	end
 
-    self._text = self:AddChild(Text(BODYTEXTFONT, (self._show_clock_text and 1 or 0.75) * 33 / basescale))
+    self._text = self:AddChild(Text(BODYTEXTFONT, ((self._show_clock_text or self._chinese) and 1 or 0.75) * 33 / basescale))
     self._text:SetPosition(5, 0 / basescale, 0)
 
     --Default initialization

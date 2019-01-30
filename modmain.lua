@@ -52,16 +52,25 @@ local UNITS =
 GLOBAL.TUNING.COMBINED_STATUS_UNITS = UNITS
 GLOBAL.TUNING.COMBINED_STATUS_UNIT = UNIT
 
-local RPGHUD = false
-for _, moddir in ipairs(GLOBAL.KnownModIndex:GetModsToLoad()) do
-    if string.match(GLOBAL.KnownModIndex:GetModInfo(moddir).name or "", "RPG HUD") then
-		RPGHUD = true
-    end
+local CHECK_MODS = {
+	["workshop-1402200186"] = "TROPICAL",
+	["workshop-874857181"] = "CHINESE",
+}
+local HAS_MOD = {}
+--If the mod is a]ready loaded at this point
+for mod_name, key in pairs(CHECK_MODS) do
+	HAS_MOD[key] = HAS_MOD[key] or (GLOBAL.KnownModIndex:IsModEnabled(mod_name) and mod_name)
 end
-
-local TROPICAL = GLOBAL.KnownModIndex:IsModEnabled("workshop-1402200186")
+--If the mod hasn't loaded yet
 for k,v in pairs(GLOBAL.KnownModIndex:GetModsToLoad()) do
-	TROPICAL = TROPICAL or v == "workshop-1402200186"
+	local mod_type = CHECK_MODS[v]
+	if mod_type then
+		HAS_MOD[mod_type] = v
+	end
+	-- Have to special-case this check because there are so many variants of RPG HUD that this is really the best way to check
+    if string.match(GLOBAL.KnownModIndex:GetModInfo(v).name or "", "RPG HUD") then
+		HAS_MOD.RPGHUD = true
+    end
 end
 
 local require = GLOBAL.require
@@ -167,7 +176,7 @@ end
 AddClassPostConstruct("widgets/badge", BadgePostConstruct)
 
 local function BoatBadgePostConstruct(self)
-	local nudge = RPGHUD and 75 or 12.5
+	local nudge = HAS_MOD.RPGHUD and 75 or 12.5
 	self.bg:SetPosition(-.5, nudge-40)
 	
 	self.num:SetFont(GLOBAL.NUMBERFONT)
@@ -177,7 +186,7 @@ local function BoatBadgePostConstruct(self)
 	self.num:MoveToFront()
 	self.num:Show()
 end
-if (CSW or HML or TROPICAL) and SHOWSTATNUMBERS then
+if (CSW or HML or HAS_MOD.TROPICAL) and SHOWSTATNUMBERS then
 	AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
 	end)
@@ -324,16 +333,18 @@ local function AddSeasonBadge(self)
 end
 
 local function ControlsPostConstruct(self)
-	if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
-		self.clock.text_upper:SetScale(.8, .8, 0)
-		self.clock.text_lower:SetScale(.8, .8, 0)
-	else
-		local text = DST and "_text" or "text"
-		self.clock[text]:SetPosition(5, 0)
-		self.clock[text]:SetScale(.8, .8, 0)
+	if not HAS_MOD.CHINESE then
+		if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
+			self.clock.text_upper:SetScale(.8, .8, 0)
+			self.clock.text_lower:SetScale(.8, .8, 0)
+		else
+			local text = DST and "_text" or "text"
+			self.clock[text]:SetPosition(5, 0)
+			self.clock[text]:SetScale(.8, .8, 0)
+		end
 	end
 	if SHOWSEASONCLOCK then
-		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT))
+		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT, HAS_MOD.CHINESE))
 		self.seasonclock:SetPosition(50, 10)
 		self.seasonclock:SetScale(0.8, 0.8, 0.8)
 		self.clock:SetPosition(-50, 10)
