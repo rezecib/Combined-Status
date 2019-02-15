@@ -148,9 +148,15 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 		local sm_mt_index = sm_mt.__index
 		sm_mt.__index = function(sm, key)
 			-- someone tried to get a season length, return from our local table (and fall back to the original __index)
-			return sm_seasonlengths[key] 
-				or (type(sm_mt_index) == "table" and sm_mt_index[key])
-				or (type(sm_mt_index) == "function" and sm_mt_index(sm, key))
+			if sm_seasonlengths[key] ~= nil then
+				-- if it's one of our season lengths, return it from the local table
+				return sm_seasonlengths[key]
+				-- otherwise, support both types of __index definitions for the previous __index
+			elseif type(sm_mt_index) == "table" then
+				return sm_mt_index[key]
+			elseif type(sm_mt_index) == "function" then
+				return sm_mt_index(sm, key)
+			end
 		end
 		
 		-- intercept table assignment so we know when season lengths change
@@ -165,7 +171,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 				sm_mt_newindex(sm, key, val)
 			else -- and finally fall back to a normal set
 				rawset(sm, key, val)
-			end			
+			end
 		end
 		
 		self.inst:ListenForEvent("daycomplete", function(inst, data)
