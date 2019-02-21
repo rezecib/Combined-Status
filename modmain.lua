@@ -77,25 +77,6 @@ local require = GLOBAL.require
 local Widget = require('widgets/widget')
 local Image = require('widgets/image')
 local Text = require('widgets/text')
-if not DST then
-	-- Need to make font and size available
-	_Text_SetFont = Text.SetFont
-	function Text:SetFont(font, ...)
-		_Text_SetFont(self, font, ...)
-		self.font = font
-	end
-	_Text_SetSize = Text.SetSize
-	function Text:SetSize(size, ...)
-		_Text_SetSize(self, size, ...)
-		self.size = size
-	end
-	_Text_ctor = Text._ctor
-	function Text:_ctor(font, size, ...)
-		_Text_ctor(self, font, size, ...)
-		self:SetFont(font)
-		self:SetSize(size)
-	end
-end
 local PlayerBadge = require("widgets/playerbadge" .. (DST and "" or "_combined_status"))
 local Minibadge = require("widgets/minibadge")
 if not DST then
@@ -592,6 +573,8 @@ local function ProxyWorldClockDay()
 	end
 end
 
+local has_modified_text = false
+
 local function UIClockPostInit(self)
 	if not SHOWCLOCKTEXT then
 		if CSW or HML then
@@ -624,6 +607,30 @@ local function UIClockPostInit(self)
 			-- In Vanilla, RoG, and DST we need something fancier
 			-- Change UpdateDayString and UpdateWorldString to write to a fake invisible Text,
 			-- so we can capture the output strings to assemble the one we want
+			if not has_modified_text then
+				-- guard this with a lock to prevent multi-modification
+				-- also delay this modification until UIClockPostInit to ensure it doesn't run on the menus
+				has_modified_text = true 
+				if not DST then
+					-- Need to make font and size available
+					_Text_SetFont = Text.SetFont
+					function Text:SetFont(font, ...)
+						_Text_SetFont(self, font, ...)
+						self.font = font
+					end
+					_Text_SetSize = Text.SetSize
+					function Text:SetSize(size, ...)
+						_Text_SetSize(self, size, ...)
+						self.size = size
+					end
+					_Text_ctor = Text._ctor
+					function Text:_ctor(font, size, ...)
+						_Text_ctor(self, font, size, ...)
+						self.font = font
+						self.size = size
+					end
+				end
+			end
 			local text = DST and "_text" or "text"
 			local text_proxy = Text(self[text].font, self[text].size)
 			local day_text = ""
