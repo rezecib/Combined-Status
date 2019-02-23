@@ -133,10 +133,11 @@ local function BadgePostConstruct(self)
 	local OldSetPercent = self.SetPercent
 	if OldSetPercent then
 		function self:SetPercent(val, max, ...)
-			self.maxnum:SetString(maxtxt..tostring(math.ceil(max or 100)))
+			local maxnum_str = tostring(math.ceil(max or 100))
+			self.maxnum:SetString(maxtxt..maxnum_str)
 			OldSetPercent(self, val, max, ...)
 			if SHOWDETAILEDSTATNUMBERS then
-				self.num:SetString(self.num:GetString().."/"..max)
+				self.num:SetString(self.num:GetString().."/"..maxnum_str)
 			end
 		end
 	end
