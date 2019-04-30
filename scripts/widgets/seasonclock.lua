@@ -175,12 +175,14 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 		end
 		
 		self.inst:ListenForEvent("daycomplete", function(inst, data)
-			self:OnCyclesChanged()
-			if self._have_focus then
-				self:OnGainFocus()
-			else
-				self:OnLoseFocus()
-			end
+			self.inst:DoTaskInTime(0, function()
+				self:OnCyclesChanged()
+				if self._have_focus then
+					self:OnGainFocus()
+				else
+					self:OnLoseFocus()
+				end
+			end)
 		end, GetWorld())
 		self.inst:ListenForEvent("seasonChange", function()
 			self:OnSeasonLengthsChanged()

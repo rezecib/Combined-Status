@@ -308,7 +308,7 @@ local function AddSeasonBadge(self)
 		self.inst:ListenForEvent("cycleschanged", function() UpdateText() end, GLOBAL.TheWorld)
 		self.inst:ListenForEvent("seasonlengthschanged", function() UpdateText() end, GLOBAL.TheWorld)
 	else
-		self.inst:ListenForEvent("daycomplete", function() UpdateText() end, GLOBAL.GetWorld())
+		self.inst:ListenForEvent("daycomplete", function() self.inst:DoTaskInTime(0, function() UpdateText() end) end, GLOBAL.GetWorld())
 		self.inst:ListenForEvent("seasonChange", function() UpdateText() end, GLOBAL.GetWorld())
 	end
 	UpdateText()
