@@ -574,7 +574,30 @@ local function ProxyWorldClockDay()
 	end
 end
 
-local has_modified_text = false
+-- Only run this in Vanilla and RoG (DST already records these)
+if not SHOWCLOCKTEXT and not (DST or CSW or HML)then
+	local function RecordTextWidgetFontAndSize()
+		-- Need to make font and size available for UIClockPostInit below
+		_Text_SetFont = Text.SetFont
+		function Text:SetFont(font, ...)
+			_Text_SetFont(self, font, ...)
+			self.font = font
+		end
+		_Text_SetSize = Text.SetSize
+		function Text:SetSize(size, ...)
+			_Text_SetSize(self, size, ...)
+			self.size = size
+		end
+		_Text_ctor = Text._ctor
+		function Text:_ctor(font, size, ...)
+			_Text_ctor(self, font, size, ...)
+			self.font = font
+			self.size = size
+		end
+	end
+	-- Run it after World init so it doesn't run on menus, but runs before UIClock's constructor
+	AddPrefabPostInit("world", RecordTextWidgetFontAndSize)
+end
 
 local function UIClockPostInit(self)
 	if not SHOWCLOCKTEXT then
@@ -608,30 +631,6 @@ local function UIClockPostInit(self)
 			-- In Vanilla, RoG, and DST we need something fancier
 			-- Change UpdateDayString and UpdateWorldString to write to a fake invisible Text,
 			-- so we can capture the output strings to assemble the one we want
-			if not has_modified_text then
-				-- guard this with a lock to prevent multi-modification
-				-- also delay this modification until UIClockPostInit to ensure it doesn't run on the menus
-				has_modified_text = true 
-				if not DST then
-					-- Need to make font and size available
-					_Text_SetFont = Text.SetFont
-					function Text:SetFont(font, ...)
-						_Text_SetFont(self, font, ...)
-						self.font = font
-					end
-					_Text_SetSize = Text.SetSize
-					function Text:SetSize(size, ...)
-						_Text_SetSize(self, size, ...)
-						self.size = size
-					end
-					_Text_ctor = Text._ctor
-					function Text:_ctor(font, size, ...)
-						_Text_ctor(self, font, size, ...)
-						self.font = font
-						self.size = size
-					end
-				end
-			end
 			local text = DST and "_text" or "text"
 			local text_proxy = Text(self[text].font, self[text].size)
 			local day_text = ""
