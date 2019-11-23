@@ -315,35 +315,37 @@ local function AddSeasonBadge(self)
 end
 
 local function ControlsPostConstruct(self)
-	if not HAS_MOD.CHINESE then
-		if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
-			self.clock.text_upper:SetScale(.8, .8, 0)
-			self.clock.text_lower:SetScale(.8, .8, 0)
-		else
-			local text = DST and "_text" or "text"
-			self.clock[text]:SetPosition(5, 0)
-			self.clock[text]:SetScale(.8, .8, 0)
+	if self.clock then
+		if not HAS_MOD.CHINESE then
+			if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
+				self.clock.text_upper:SetScale(.8, .8, 0)
+				self.clock.text_lower:SetScale(.8, .8, 0)
+			else
+				local text = DST and "_text" or "text"
+				self.clock[text]:SetPosition(5, 0)
+				self.clock[text]:SetScale(.8, .8, 0)
+			end
 		end
-	end
-	if SHOWSEASONCLOCK then
-		self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT, HAS_MOD.CHINESE))
-		self.seasonclock:SetPosition(50, 10)
-		self.seasonclock:SetScale(0.8, 0.8, 0.8)
-		self.clock:SetPosition(-50, 10)
-		self.clock:SetScale(0.8, 0.8, 0.8)
-	elseif MICROSEASONS then
-		AddSeasonBadge(self)
+		if SHOWSEASONCLOCK then
+			self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT, HAS_MOD.CHINESE))
+			self.seasonclock:SetPosition(50, 10)
+			self.seasonclock:SetScale(0.8, 0.8, 0.8)
+			self.clock:SetPosition(-50, 10)
+			self.clock:SetScale(0.8, 0.8, 0.8)
+		elseif MICROSEASONS then
+			AddSeasonBadge(self)
+		end
+		
+		if not DST and GLOBAL.GetWorld():IsCave() then
+			if not HIDECAVECLOCK then
+				self.clock:Show()
+			end
+			self.status:SetPosition(0, -110)
+		end
 	end
 	
 	self.sidepanel:SetPosition(-100, -70)
 	
-	if not DST and GLOBAL.GetWorld():IsCave() then
-		if not HIDECAVECLOCK then
-			self.clock:Show()
-		end
-		self.status:SetPosition(0, -110)
-	end
-		
 	local _SetHUDSize = self.SetHUDSize
 	function self:SetHUDSize()
 		_SetHUDSize(self)
@@ -936,7 +938,7 @@ function PlayerHud:OpenControllerInventory(...)
 	if self.controls.clock then
 		self.controls.clock:OnGainFocus()
 	end
-	if SHOWSEASONCLOCK then
+	if SHOWSEASONCLOCK and self.controls.seasonclock then
 		self.controls.seasonclock:OnGainFocus()
 	end
 end
@@ -946,7 +948,7 @@ function PlayerHud:CloseControllerInventory(...)
 	if self.controls.clock then
 		self.controls.clock:OnLoseFocus()
 	end
-	if SHOWSEASONCLOCK then
+	if SHOWSEASONCLOCK and self.controls.seasonclock then
 		self.controls.seasonclock:OnLoseFocus()
 	end
 end
