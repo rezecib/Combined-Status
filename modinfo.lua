@@ -19,6 +19,7 @@ priority = 0
 dont_starve_compatible = true
 reign_of_giants_compatible = true
 shipwrecked_compatible = true
+hamlet_compatible = true
 dst_compatible = true
 
 --This lets clients know if they need to get the mod from the Steam Workshop to join the game
