@@ -173,6 +173,20 @@ if (CSW or HML or HAS_MOD.TROPICAL) and SHOWSTATNUMBERS then
 		AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
 	end)
 end
+local function BoatMeterPostConstruct(self)
+	BadgePostConstruct(self)
+	self.inst:ListenForEvent("open_meter", function()
+		self.bg:Show()
+		self.num:Show()
+	end)
+	self.inst:ListenForEvent("close_meter", function()
+		self.bg:Hide()
+		self.num:Hide()
+	end)
+end
+if DST and SHOWSTATNUMBERS then
+	AddClassPostConstruct("widgets/boatmeter", BoatMeterPostConstruct)
+end
 
 local function MoistureMeterPostConstruct(self)
 	BadgePostConstruct(self)
