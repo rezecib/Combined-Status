@@ -183,6 +183,10 @@ local function BoatMeterPostConstruct(self)
 		self.bg:Hide()
 		self.num:Hide()
 	end)
+	if self.boat == nil then
+		self.bg:Hide()
+		self.num:Hide()
+	end
 end
 if DST and SHOWSTATNUMBERS then
 	AddClassPostConstruct("widgets/boatmeter", BoatMeterPostConstruct)
