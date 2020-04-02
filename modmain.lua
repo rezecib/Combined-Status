@@ -519,6 +519,7 @@ local function StatusPostConstruct(self)
 	if COMPACTSEASONS then AddSeasonBadge(self) end
 	
 	if DST then
+		--Note this is deprecated now in DST but might as well keep it for backwards-compatibility.
 		--DST-only functions for Beaverness
 		local OldAddBeaverness = self.AddBeaverness
 		self.AddBeaverness = function(self, ...)
@@ -555,6 +556,10 @@ local function StatusPostConstruct(self)
 			self.beaverbadge:Show()
 		end, self.owner)
 		self.owner.components.beaverness:DoDelta(0, true)
+	end
+	
+	if self.pethealthbadge then
+		self.pethealthbadge:SetPosition(-62, -52)
 	end
 		
 	-- Puppy Princess Musha badge fix
