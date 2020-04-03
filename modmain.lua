@@ -128,17 +128,21 @@ local function BadgePostConstruct(self)
 		self.num:Show()
 	end
 	
-	-- for health/hunger/sanity/beaverness
 	local maxtxt = SHOWMAXONNUMBERS and "Max:\n" or ""
+	function self:CombinedStatusUpdateNumbers(max)
+		local maxnum_str = tostring(math.ceil(max or 100))
+		self.maxnum:SetString(maxtxt..maxnum_str)
+		if SHOWDETAILEDSTATNUMBERS then
+			self.num:SetString(self.num:GetString().."/"..maxnum_str)
+		end
+	end
+	
+	-- for health/hunger/sanity/beaverness
 	local OldSetPercent = self.SetPercent
 	if OldSetPercent then
 		function self:SetPercent(val, max, ...)
-			local maxnum_str = tostring(math.ceil(max or 100))
-			self.maxnum:SetString(maxtxt..maxnum_str)
 			OldSetPercent(self, val, max, ...)
-			if SHOWDETAILEDSTATNUMBERS then
-				self.num:SetString(self.num:GetString().."/"..maxnum_str)
-			end
+			self:CombinedStatusUpdateNumbers(max)
 		end
 	end
 	
@@ -146,11 +150,17 @@ local function BadgePostConstruct(self)
 	local OldSetValue = self.SetValue
 	if OldSetValue then
 		function self:SetValue(val, max, ...)
-			self.maxnum:SetString(maxtxt..tostring(math.ceil(max)))
 			OldSetValue(self, val, max, ...)
-			if SHOWDETAILEDSTATNUMBERS and val > 0 then
-				self.num:SetString(self.num:GetString().."/"..max)
-			end
+			self:CombinedStatusUpdateNumbers(max)
+		end
+	end
+	
+	-- for boatmeter in DST
+	local OldRefreshHealth = self.RefreshHealth
+	if OldRefreshHealth then
+		function self:RefreshHealth(...)
+			OldRefreshHealth(self, ...)
+			self:CombinedStatusUpdateNumbers(self.boat.components.healthsyncer.max_health)
 		end
 	end
 
