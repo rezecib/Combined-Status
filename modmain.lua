@@ -89,7 +89,7 @@ local Badge = require("widgets/badge")
 local badges = {}
 local function BadgePostConstruct(self)
 	if self.active == nil then
-		self.active = false
+		self.active = true
 	end
 	
 	self:SetScale(.9,.9,.9)
