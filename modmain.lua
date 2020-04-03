@@ -558,8 +558,14 @@ local function StatusPostConstruct(self)
 		self.owner.components.beaverness:DoDelta(0, true)
 	end
 	
+	local _boatx = -62
 	if self.pethealthbadge then
+		_boatx = _boatx - 62
 		self.pethealthbadge:SetPosition(-62, -52)
+	end
+	
+	if self.boatmeter then
+		self.boatmeter:SetPosition(_boatx, -52)
 	end
 		
 	-- Puppy Princess Musha badge fix
