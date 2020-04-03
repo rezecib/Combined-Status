@@ -88,6 +88,10 @@ local Badge = require("widgets/badge")
 
 local badges = {}
 local function BadgePostConstruct(self)
+	if self.active == nil then
+		self.active = false
+	end
+	
 	self:SetScale(.9,.9,.9)
 	-- Make sure that badge scaling animations are adjusted accordingly (e.g. WX's upgrade animation)
 	local _ScaleTo = self.ScaleTo
@@ -118,14 +122,18 @@ local function BadgePostConstruct(self)
 	local OldOnGainFocus = self.OnGainFocus
 	function self:OnGainFocus()
 		OldOnGainFocus(self)
-		self.maxnum:Show()
+		if self.active then
+			self.maxnum:Show()
+		end
 	end
 
 	local OldOnLoseFocus = self.OnLoseFocus
 	function self:OnLoseFocus()
 		OldOnLoseFocus(self)
 		self.maxnum:Hide()
-		self.num:Show()
+		if self.active then
+			self.num:Show()
+		end
 	end
 	
 	local maxtxt = SHOWMAXONNUMBERS and "Max:\n" or ""
@@ -163,7 +171,6 @@ local function BadgePostConstruct(self)
 			self:CombinedStatusUpdateNumbers(self.boat.components.healthsyncer.max_health)
 		end
 	end
-
 end
 AddClassPostConstruct("widgets/badge", BadgePostConstruct)
 
@@ -184,12 +191,15 @@ if (CSW or HML or HAS_MOD.TROPICAL) and SHOWSTATNUMBERS then
 	end)
 end
 local function BoatMeterPostConstruct(self)
+	self.active = false
 	BadgePostConstruct(self)
 	self.inst:ListenForEvent("open_meter", function()
+		self.active = true
 		self.bg:Show()
 		self.num:Show()
 	end)
 	self.inst:ListenForEvent("close_meter", function()
+		self.active = false
 		self.bg:Hide()
 		self.num:Hide()
 	end)
