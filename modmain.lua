@@ -111,7 +111,9 @@ local function BadgePostConstruct(self)
 	self.num:SetScale(1,.78,1)
 
 	self.num:MoveToFront()
-	self.num:Show()
+	if self.active then
+		self.num:Show()
+	end
 
 	badges[self] = self
 	self.maxnum = self:AddChild(Text(GLOBAL.NUMBERFONT, SHOWMAXONNUMBERS and 25 or 33))
@@ -138,6 +140,8 @@ local function BadgePostConstruct(self)
 	
 	local maxtxt = SHOWMAXONNUMBERS and "Max:\n" or ""
 	function self:CombinedStatusUpdateNumbers(max)
+		-- avoid updating numbers on hidden badges
+		if not self.active then return end
 		local maxnum_str = tostring(math.ceil(max or 100))
 		self.maxnum:SetString(maxtxt..maxnum_str)
 		if SHOWDETAILEDSTATNUMBERS then
@@ -397,8 +401,12 @@ local function ControlsPostConstruct(self)
 	_ShowStatusNumbers = statusholder.ShowStatusNumbers
 	function statusholder:ShowStatusNumbers(...)
 		_ShowStatusNumbers(self, ...)
+		-- Fix for https://forums.kleientertainment.com/klei-bug-tracker/dont-starve-together-return-of-them/with-controller-after-drying-off-a-floating-1-shows-for-moisture-r24283/
+		if self.moisturemeter and not self.moisturemeter.active then
+			self.moisturemeter.num:Hide()
+		end
 		for _,badge in pairs(badges) do
-			if badge and badge.maxnum then
+			if badge and badge.maxnum and badge.active then
 				badge.maxnum:Show()
 			end
 		end
