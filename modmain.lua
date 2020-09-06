@@ -43,7 +43,7 @@ local MICROSEASONS = SEASONOPTIONS == "Micro"
 local HUDSCALEFACTOR = GetModConfigData("HUDSCALEFACTOR")*.01
 
 if SHOWNAUGHTINESS then
-	if DST and not GLOBAL.KnownModIndex:IsModEnabled("workshop-2189004162") then
+	if DST and not GLOBAL.KnownModIndex:IsModEnabled("workshop-2189004162") then -- shouldnt show naughtiness if this isnt here to provide it
 		SHOWNAUGHTINESS = false
 	end
 end
@@ -445,7 +445,7 @@ local function KrampedPostInit(self)
 		self.inst:PushEvent("naughtydelta")
 	end
 end
-if SHOWNAUGHTINESS and DST == false then
+if SHOWNAUGHTINESS and DST == false then -- only activate in DS
 	AddComponentPostInit('kramped', KrampedPostInit)
 end
 
@@ -461,11 +461,12 @@ local function StatusPostConstruct(self)
 	local nudge = 0
 	if SHOWNAUGHTINESS then	
 		self.naughtiness = self:AddChild(Minibadge("naughtiness", self.owner))
-		local function UpdateNaughty(_, data)
+		local function UpdateNaughty(_, data) -- player, data
 			if DST == false then
 				self.naughtiness.num:SetString(	(self.owner.components.kramped.actions or 0) .. "/" ..
 												(self.owner.components.kramped.threshold or 0) 			)
 			else
+				-- data = { actions = n, threshold = n }
 				self.naughtiness.num:SetString(data.actions .. "/" .. data.threshold)
 			end
 		end
@@ -477,9 +478,11 @@ local function StatusPostConstruct(self)
 			self.naughtybadge:SetScale(0.35, 0.35, 1)
 			self.naughtybadge:SetPosition(41, -35.5)
 			if DST == true then
-				self.naughtybadge.head:Hide()
+				-- GetAnimState is nil on the default head since it's not a UIAnim
+				self.naughtybadge.head:Hide() -- i planned to just :Kill() it, but in case someone is relying on the Image existing...
 				self.naughtybadge.real_head = self.naughtybadge.icon:AddChild(UIAnim())
 			else
+				-- avoid duplicating lines
 				self.naughtybadge.real_head = self.naughtybadge.head
 			end
 			self.naughtybadge.real_head:GetAnimState():SetBank('krampus')
@@ -491,7 +494,7 @@ local function StatusPostConstruct(self)
 			self.naughtiness.num:SetPosition(10, -40.5)
 			self.naughtiness.num:SetScale(0.9, .7, 1)
 		end
-		if DST == false then
+		if DST == false then -- DS only
 			self.owner.components.kramped:OnNaughtyAction(0)
 		end
 		nudge = nudge - 30
