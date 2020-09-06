@@ -24,7 +24,7 @@ local SHOWDETAILEDSTATNUMBERS = SHOWSTATNUMBERS == "Detailed"
 local SHOWMAXONNUMBERS = GetModConfigData("SHOWMAXONNUMBERS")
 local SHOWCLOCKTEXT = GetModConfigData("SHOWCLOCKTEXT") ~= false
 local SHOWTEMPERATURE = GetModConfigData("SHOWTEMPERATURE")
-local SHOWNAUGHTINESS = GetModConfigData("SHOWNAUGHTINESS") and not DST
+local SHOWNAUGHTINESS = GetModConfigData("SHOWNAUGHTINESS")
 local SHOWWORLDTEMP = GetModConfigData("SHOWWORLDTEMP")
 local SHOWTEMPBADGES = GetModConfigData("SHOWTEMPBADGES")
 local SHOWBEAVERNESS = GetModConfigData("SHOWBEAVERNESS")
@@ -41,6 +41,13 @@ local SHOWSEASONCLOCK = SEASONOPTIONS == "Clock"
 local COMPACTSEASONS = SEASONOPTIONS == "Compact"
 local MICROSEASONS = SEASONOPTIONS == "Micro"
 local HUDSCALEFACTOR = GetModConfigData("HUDSCALEFACTOR")*.01
+
+if SHOWNAUGHTINESS then
+	if DST and not GLOBAL.KnownModIndex:IsModEnabled("workshop-2189004162") then
+		SHOWNAUGHTINESS = false
+	end
+end
+	
 
 local UNITS =
 {
@@ -78,6 +85,7 @@ local Widget = require('widgets/widget')
 local Image = require('widgets/image')
 local Text = require('widgets/text')
 local PlayerBadge = require("widgets/playerbadge" .. (DST and "" or "_combined_status"))
+local UIAnim = require "widgets/uianim"
 local Minibadge = require("widgets/minibadge")
 if not DST then
 	table.insert(Assets, Asset("ATLAS", "images/avatars_combined_status.xml"))
@@ -437,7 +445,7 @@ local function KrampedPostInit(self)
 		self.inst:PushEvent("naughtydelta")
 	end
 end
-if SHOWNAUGHTINESS then
+if SHOWNAUGHTINESS and DST == false then
 	AddComponentPostInit('kramped', KrampedPostInit)
 end
 
@@ -453,9 +461,13 @@ local function StatusPostConstruct(self)
 	local nudge = 0
 	if SHOWNAUGHTINESS then	
 		self.naughtiness = self:AddChild(Minibadge("naughtiness", self.owner))
-		local function UpdateNaughty()
-			self.naughtiness.num:SetString(	(self.owner.components.kramped.actions or 0) .. "/" ..
-											(self.owner.components.kramped.threshold or 0) 			)
+		local function UpdateNaughty(_, data)
+			if DST == false then
+				self.naughtiness.num:SetString(	(self.owner.components.kramped.actions or 0) .. "/" ..
+												(self.owner.components.kramped.threshold or 0) 			)
+			else
+				self.naughtiness.num:SetString(data.actions .. "/" .. data.threshold)
+			end
 		end
 		self.naughtiness:SetPosition(65.5, 0)
 		self.naughtiness.bg:SetScale(.55, .43, 1)
@@ -464,16 +476,24 @@ local function StatusPostConstruct(self)
 			self.naughtybadge = self:AddChild(PlayerBadge('krampus', {80/255, 60/255, 30/255, 1}, false, 0))
 			self.naughtybadge:SetScale(0.35, 0.35, 1)
 			self.naughtybadge:SetPosition(41, -35.5)
-			self.naughtybadge.head:GetAnimState():SetBank('krampus')
-			self.naughtybadge.head:GetAnimState():SetBuild('krampus_build')
-			self.naughtybadge.head:GetAnimState():SetPercent('hit', 1)
-			self.naughtybadge.head:SetScale(0.1)
-			self.naughtybadge.head:SetPosition(0, -32)
+			if DST == true then
+				self.naughtybadge.head:Hide()
+				self.naughtybadge.real_head = self.naughtybadge.icon:AddChild(UIAnim())
+			else
+				self.naughtybadge.real_head = self.naughtybadge.head
+			end
+			self.naughtybadge.real_head:GetAnimState():SetBank('krampus')
+			self.naughtybadge.real_head:GetAnimState():SetBuild('krampus_build')
+			self.naughtybadge.real_head:GetAnimState():SetPercent('hit', 1)
+			self.naughtybadge.real_head:SetScale(0.1)
+			self.naughtybadge.real_head:SetPosition(0, -32)
 			self.naughtiness.bg:SetPosition(4, -40)
 			self.naughtiness.num:SetPosition(10, -40.5)
 			self.naughtiness.num:SetScale(0.9, .7, 1)
 		end
-		self.owner.components.kramped:OnNaughtyAction(0)
+		if DST == false then
+			self.owner.components.kramped:OnNaughtyAction(0)
+		end
 		nudge = nudge - 30
 	end
 	
