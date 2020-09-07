@@ -42,13 +42,6 @@ local COMPACTSEASONS = SEASONOPTIONS == "Compact"
 local MICROSEASONS = SEASONOPTIONS == "Micro"
 local HUDSCALEFACTOR = GetModConfigData("HUDSCALEFACTOR")*.01
 
-if SHOWNAUGHTINESS then
-	if DST and not GLOBAL.KnownModIndex:IsModEnabled("workshop-2189004162") then -- shouldnt show naughtiness if this isnt here to provide it
-		SHOWNAUGHTINESS = false
-	end
-end
-	
-
 local UNITS =
 {
 	T = function(val) return math.floor(val+0.5) .. "\176" end,
@@ -62,6 +55,7 @@ GLOBAL.TUNING.COMBINED_STATUS_UNIT = UNIT
 local CHECK_MODS = {
 	["workshop-1402200186"] = "TROPICAL",
 	["workshop-874857181"] = "CHINESE",
+	["workshop-2189004162"] = "INSIGHT",
 }
 local HAS_MOD = {}
 --If the mod is a]ready loaded at this point
@@ -445,7 +439,14 @@ local function KrampedPostInit(self)
 		self.inst:PushEvent("naughtydelta")
 	end
 end
-if SHOWNAUGHTINESS and DST == false then -- only activate in DS
+
+if SHOWNAUGHTINESS and DST then
+	if not HAS_MOD.INSIGHT then
+		SHOWNAUGHTINESS = false
+	end
+end
+
+if SHOWNAUGHTINESS and not DST then
 	AddComponentPostInit('kramped', KrampedPostInit)
 end
 
@@ -478,12 +479,14 @@ local function StatusPostConstruct(self)
 			self.naughtybadge = self:AddChild(PlayerBadge('krampus', {80/255, 60/255, 30/255, 1}, false, 0))
 			self.naughtybadge:SetScale(0.35, 0.35, 1)
 			self.naughtybadge:SetPosition(41, -35.5)
-			if DST == true then
-				-- GetAnimState is nil on the default head since it's not a UIAnim
-				self.naughtybadge.head:Hide() -- i planned to just :Kill() it, but in case someone is relying on the Image existing...
+			if DST then
+				-- head in DS is a UIAnim, head in DST is a Image
+				-- GetAnimState is nil on the default head since it's not a UIAnim, and is instead an Image
+				self.naughtybadge.head:Hide() -- i planned to just :Kill() the widget, but in case someone is relying on the Image existing for whatever reason
+				-- so i just assign a member called real_head with a UIAnim
 				self.naughtybadge.real_head = self.naughtybadge.icon:AddChild(UIAnim())
 			else
-				-- avoid duplicating lines
+				-- avoid duplicating lines here, so just assigning the head to a different member
 				self.naughtybadge.real_head = self.naughtybadge.head
 			end
 			self.naughtybadge.real_head:GetAnimState():SetBank('krampus')
@@ -495,7 +498,7 @@ local function StatusPostConstruct(self)
 			self.naughtiness.num:SetPosition(10, -40.5)
 			self.naughtiness.num:SetScale(0.9, .7, 1)
 		end
-		if DST == false then -- DS only
+		if not DST then -- DS only
 			self.owner.components.kramped:OnNaughtyAction(0)
 		end
 		nudge = nudge - 30
