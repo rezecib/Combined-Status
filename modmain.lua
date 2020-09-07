@@ -462,13 +462,14 @@ local function StatusPostConstruct(self)
 	if SHOWNAUGHTINESS then	
 		self.naughtiness = self:AddChild(Minibadge("naughtiness", self.owner))
 		local function UpdateNaughty(_, data) -- player, data
-			if DST == false then
-				self.naughtiness.num:SetString(	(self.owner.components.kramped.actions or 0) .. "/" ..
-												(self.owner.components.kramped.threshold or 0) 			)
+			if DST then
+				data = type(data) == "table" and data or {}
 			else
-				-- data = { actions = n, threshold = n }
-				self.naughtiness.num:SetString(data.actions .. "/" .. data.threshold)
+				data = self.owner.components.kramped
 			end
+			local actions = type(data.actions) == "number" and data.actions or 0
+			local threshold = type(data.threshold) == "number" and data.threshold or 0
+			self.naughtiness.num:SetString(actions .. "/" .. threshold)
 		end
 		self.naughtiness:SetPosition(65.5, 0)
 		self.naughtiness.bg:SetScale(.55, .43, 1)
