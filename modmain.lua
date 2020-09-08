@@ -24,7 +24,7 @@ local SHOWDETAILEDSTATNUMBERS = SHOWSTATNUMBERS == "Detailed"
 local SHOWMAXONNUMBERS = GetModConfigData("SHOWMAXONNUMBERS")
 local SHOWCLOCKTEXT = GetModConfigData("SHOWCLOCKTEXT") ~= false
 local SHOWTEMPERATURE = GetModConfigData("SHOWTEMPERATURE")
-local SHOWNAUGHTINESS = GetModConfigData("SHOWNAUGHTINESS") and not DST
+local SHOWNAUGHTINESS = GetModConfigData("SHOWNAUGHTINESS")
 local SHOWWORLDTEMP = GetModConfigData("SHOWWORLDTEMP")
 local SHOWTEMPBADGES = GetModConfigData("SHOWTEMPBADGES")
 local SHOWBEAVERNESS = GetModConfigData("SHOWBEAVERNESS")
@@ -55,6 +55,7 @@ GLOBAL.TUNING.COMBINED_STATUS_UNIT = UNIT
 local CHECK_MODS = {
 	["workshop-1402200186"] = "TROPICAL",
 	["workshop-874857181"] = "CHINESE",
+	["workshop-2189004162"] = "INSIGHT",
 }
 local HAS_MOD = {}
 --If the mod is a]ready loaded at this point
@@ -78,6 +79,7 @@ local Widget = require('widgets/widget')
 local Image = require('widgets/image')
 local Text = require('widgets/text')
 local PlayerBadge = require("widgets/playerbadge" .. (DST and "" or "_combined_status"))
+local UIAnim = require "widgets/uianim"
 local Minibadge = require("widgets/minibadge")
 if not DST then
 	table.insert(Assets, Asset("ATLAS", "images/avatars_combined_status.xml"))
@@ -437,7 +439,14 @@ local function KrampedPostInit(self)
 		self.inst:PushEvent("naughtydelta")
 	end
 end
-if SHOWNAUGHTINESS then
+
+if SHOWNAUGHTINESS and DST then
+	if not HAS_MOD.INSIGHT then
+		SHOWNAUGHTINESS = false
+	end
+end
+
+if SHOWNAUGHTINESS and not DST then
 	AddComponentPostInit('kramped', KrampedPostInit)
 end
 
@@ -453,9 +462,15 @@ local function StatusPostConstruct(self)
 	local nudge = 0
 	if SHOWNAUGHTINESS then	
 		self.naughtiness = self:AddChild(Minibadge("naughtiness", self.owner))
-		local function UpdateNaughty()
-			self.naughtiness.num:SetString(	(self.owner.components.kramped.actions or 0) .. "/" ..
-											(self.owner.components.kramped.threshold or 0) 			)
+		local function UpdateNaughty(_, data) -- player, data
+			if DST then
+				data = type(data) == "table" and data or {}
+			else
+				data = self.owner.components.kramped
+			end
+			local actions = type(data.actions) == "number" and data.actions or 0
+			local threshold = type(data.threshold) == "number" and data.threshold or 0
+			self.naughtiness.num:SetString(actions .. "/" .. threshold)
 		end
 		self.naughtiness:SetPosition(65.5, 0)
 		self.naughtiness.bg:SetScale(.55, .43, 1)
@@ -464,16 +479,28 @@ local function StatusPostConstruct(self)
 			self.naughtybadge = self:AddChild(PlayerBadge('krampus', {80/255, 60/255, 30/255, 1}, false, 0))
 			self.naughtybadge:SetScale(0.35, 0.35, 1)
 			self.naughtybadge:SetPosition(41, -35.5)
-			self.naughtybadge.head:GetAnimState():SetBank('krampus')
-			self.naughtybadge.head:GetAnimState():SetBuild('krampus_build')
-			self.naughtybadge.head:GetAnimState():SetPercent('hit', 1)
-			self.naughtybadge.head:SetScale(0.1)
-			self.naughtybadge.head:SetPosition(0, -32)
+			if DST then
+				-- head in DS is a UIAnim, head in DST is a Image
+				-- GetAnimState is nil on the default head since it's not a UIAnim, and is instead an Image
+				self.naughtybadge.head:Hide() -- i planned to just :Kill() the widget, but in case someone is relying on the Image existing for whatever reason
+				-- so i just assign a member called real_head with a UIAnim
+				self.naughtybadge.real_head = self.naughtybadge.icon:AddChild(UIAnim())
+			else
+				-- avoid duplicating lines here, so just assigning the head to a different member
+				self.naughtybadge.real_head = self.naughtybadge.head
+			end
+			self.naughtybadge.real_head:GetAnimState():SetBank('krampus')
+			self.naughtybadge.real_head:GetAnimState():SetBuild('krampus_build')
+			self.naughtybadge.real_head:GetAnimState():SetPercent('hit', 1)
+			self.naughtybadge.real_head:SetScale(0.1)
+			self.naughtybadge.real_head:SetPosition(0, -32)
 			self.naughtiness.bg:SetPosition(4, -40)
 			self.naughtiness.num:SetPosition(10, -40.5)
 			self.naughtiness.num:SetScale(0.9, .7, 1)
 		end
-		self.owner.components.kramped:OnNaughtyAction(0)
+		if not DST then -- DS only
+			self.owner.components.kramped:OnNaughtyAction(0)
+		end
 		nudge = nudge - 30
 	end
 	
