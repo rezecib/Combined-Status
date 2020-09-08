@@ -19,7 +19,7 @@ Option | Description
 **Predict Full Moon** | Whether to predict the day of the next full moon, shown when hovering over the moon icon. Defaults to _Yes_.
 **Flip Moon** | Whether to flip the moon phase icon to show it like it is in the Southern Hemisphere, instead of the default Northern Hemisphere. Defaults to _No_.
 **Season Clock** | _Clock_, the default, shows a full clock of the seasons. _Compact_ shows a smaller badge with the season and day count, while _Micro_ shows an even smaller badge. _No_ disables the season clock entirely.
-**Naughtiness** | Whether to show the naughtiness of the player. Doesn't work in Don't Starve Together, as  naughtiness is not available to clients. Defaults to _Show_.
+**Naughtiness** | Whether to show the naughtiness of the player. Doesn't work in Don't Starve Together (unless you have [Insight](https://steamcommunity.com/sharedfiles/filedetails/?id=2189004162) installed), as  naughtiness is not available to clients. Defaults to _Show_.
 **Log Meter** | Whether to show the log meter for Woodie when he is human. Only relevant to singleplayer, as Don't Starve Together always shows the log meter already. Defaults to _Always_.
 **Cave Clock** | Whether to always show the clock in the caves. Only relevant to singleplayer Reign of Giants, as the data is not available in vanilla and the clock shows in Don't Starve Together. Defaults to _Show_.
 **Stat Numbers** | Whether to show the sanity, hunger, and health numbers without having to mouse over the badges. Defaults to _Always_.

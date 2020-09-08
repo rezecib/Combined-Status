@@ -8,7 +8,7 @@ description = "Displays Health, Hunger, Sanity, Temperature, Seasons, Moon Phase
 author = "rezecib, Kiopho, Soilworker, hotmatrixx"
 
 --A version number so you can ask people if they are running an old version of your mod.
-version = "1.7.14"
+version = "1.8.0"
 
 --This lets other players know if your mod is out of date. This typically needs to be updated every time there's a new game update.
 api_version = 6
@@ -41,6 +41,7 @@ Credits:
 	Kiopho for writing the original mod and giving me permission to maintain it for DST!
 	Soilworker for making SeasonClock and allowing me to incorporate it
 	hotmatrixx for making BetterMoon and allowing me to incorporate it
+	penguin0616 for adding support for networked naughtiness in DST via their Insight mod
 ]]
 
 local hud_scale_options = {}
