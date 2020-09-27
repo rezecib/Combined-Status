@@ -240,6 +240,19 @@ if ROG or CSW or HML then
 	AddClassPostConstruct("widgets/moisturemeter", MoistureMeterPostConstruct)
 end
 
+local function InspirationBadgePostConstruct(self)
+	local inspiration_buff_scale = 0.6
+	for _, slot in ipairs(self.slots) do
+		slot:SetScale(inspiration_buff_scale, inspiration_buff_scale)
+	end
+	for _, buff in ipairs(self.buffs) do
+		buff:SetScale(inspiration_buff_scale, inspiration_buff_scale)
+	end
+end
+if DST then
+	AddClassPostConstruct("widgets/inspirationbadge", InspirationBadgePostConstruct)
+end
+
 local function FindSeasonTransitions()
 	if DST then return {"autumn", "winter", "spring", "summer"} end
 	local season_trans = {}
@@ -611,6 +624,19 @@ local function StatusPostConstruct(self)
 			self.beaverbadge:Show()
 		end, self.owner)
 		self.owner.components.beaverness:DoDelta(0, true)
+	end
+	
+	if DST then
+		if self.inspirationbadge ~= nil then
+			self.inspirationbadge:SetPosition(-62, -52)
+		end
+		local OldAddInspiration = self.AddInspiration
+		self.AddInspiration = function(self, ...)
+			OldAddInspiration(self, ...)
+			if self.inspirationbadge ~= nil then
+				self.inspirationbadge:SetPosition(-62, -52)
+			end
+		end
 	end
 	
 	local _boatx = -62
