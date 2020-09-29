@@ -248,8 +248,9 @@ local function InspirationBadgePostConstruct(self)
 	for _, buff in ipairs(self.buffs) do
 		buff:SetScale(inspiration_buff_scale, inspiration_buff_scale)
 	end
+	self.maxnum:MoveToFront()
 end
-if DST then
+if DST and GLOBAL.kleifileexists("scripts/widgets/inspirationbadge.lua") then
 	AddClassPostConstruct("widgets/inspirationbadge", InspirationBadgePostConstruct)
 end
 
@@ -640,8 +641,10 @@ local function StatusPostConstruct(self)
 	end
 	
 	local _boatx = -62
-	if self.pethealthbadge then
+	if self.pethealthbadge or self.inspirationbadge then
 		_boatx = _boatx - 62
+	end
+	if self.pethealthbadge then
 		self.pethealthbadge:SetPosition(-62, -52)
 	end
 	
