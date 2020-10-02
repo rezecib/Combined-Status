@@ -248,9 +248,11 @@ local function InspirationBadgePostConstruct(self)
 	for _, buff in ipairs(self.buffs) do
 		buff:SetScale(inspiration_buff_scale, inspiration_buff_scale)
 	end
-	self.maxnum:MoveToFront()
+	if self.maxnum then
+		self.maxnum:MoveToFront()
+	end
 end
-if DST and GLOBAL.kleifileexists("scripts/widgets/inspirationbadge.lua") then
+if DST and SHOWSTATNUMBERS and GLOBAL.kleifileexists("scripts/widgets/inspirationbadge.lua") then
 	AddClassPostConstruct("widgets/inspirationbadge", InspirationBadgePostConstruct)
 end
 
