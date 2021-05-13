@@ -859,42 +859,6 @@ local function UIClockPostInit(self)
 				self._moonanim.moontext:SetString("" .. (today+1))
 			end
 			self._moonanim.moontext:Hide()
-			
-			--[[
-				_mooomphasecycle is from 1 to 20 | table.foreach(MOON_PHASE_SLOTS, print):
-				1	threequarter
-				2	threequarter
-				3	threequarter
-				4	half
-				5	half
-				6	half
-				7	quarter
-				8	quarter
-				9	quarter -- this must be why there's an offset of 9.
-				10	new -- we start here.
-				11	quarter
-				12	quarter
-				13	quarter
-				14	half
-				15	half
-				16	half
-				17	threequarter
-				18	threequarter
-				19	threequarter
-				20	full
-			]]
-
-			--[==[
-			-- maybe TODO: special full moon conditions for the event?
-			GLOBAL.TheWorld:ListenForEvent("moonphasestylechanged", function(inst, data)
-				-- data = { style = MOON_PHASE_STYLE_NAMES[_moonphasestyle:value() + 1] }
-				--[[
-					champion been defeated: glassed_default
-					lunar energy activated: glassed_alter_active
-				]]
-				print("egglet", data.style)
-			end)
-			--]==]
 
 			-- penguin: So with eye of the storm, moon cycles are no longer consistent to happen on certain days. 
 			-- The moon cycle can be started anew at any arbitrary day (I guess you could say the moon cycle gets Altered..), so we need to account for that.
