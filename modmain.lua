@@ -894,18 +894,7 @@ local function UIClockPostInit(self)
 			-- Probable race condition based on networking latency. We need both the cycle count and the moon cycle count to be updated.
 			local cycle_updated, moon_cycle_data = true, nil -- true, nil because we have the proper cycle on load but not the moon data yet (if using Insight).
 
-			self.inst:WatchWorldState("cycles", function(inst, cycles)
-				--print("client cycle worldstate")
-				default_moon_cycle = (cycles % #MOON_PHASE_SLOTS) + 1
-				inferred_moon_cycle = (inferred_moon_cycle % #MOON_PHASE_SLOTS) + 1
-				current_moon_phase = GLOBAL.TheWorld.state.moonphase -- this event gets called before "moonphase" event so this can be put here.
-
-				cycle_updated = true
-				self.inst.OnMoonCycleDirty(inst, moon_cycle_data)
-			end)
-			
-
-			self.inst.OnMoonCycleDirty = function(inst, data)
+			local function OnMoonCycleDirty(inst, data)
 				if not HAS_MOD.INSIGHT then
 					return
 				end
@@ -926,7 +915,17 @@ local function UIClockPostInit(self)
 				end
 			end
 
-			self.inst.OnMoonPhaseStateDirty = function(inst, moonphase)
+			self.inst:WatchWorldState("cycles", function(inst, cycles)
+				--print("client cycle worldstate")
+				default_moon_cycle = (cycles % #MOON_PHASE_SLOTS) + 1
+				inferred_moon_cycle = (inferred_moon_cycle % #MOON_PHASE_SLOTS) + 1
+				current_moon_phase = GLOBAL.TheWorld.state.moonphase -- this event gets called before "moonphase" event so this can be put here.
+
+				cycle_updated = true
+				OnMoonCycleDirty(inst, moon_cycle_data)
+			end)
+
+			local function OnMoonPhaseStateDirty(inst, moonphase)
 				--print("OnMoonPhaseStateDirty")
 				-- We need a previous to contrast against a current to figure out the current spot 
 				-- Note that "current_moon_phase" in this context isn't actually current, it's the phase that existed before this one.
@@ -954,11 +953,11 @@ local function UIClockPostInit(self)
 				GLOBAL.TheWorld:ListenForEvent("moon_cycle_dirty", function(inst, data)
 					--print("client moon cycle dirty", data.moon_cycle)
 					moon_cycle_data = data
-					self.inst.OnMoonCycleDirty(inst, data)
+					OnMoonCycleDirty(inst, data)
 				end)
 			else
 				-- We have to work with predictions.
-				self.inst:WatchWorldState("moonphase", self.inst.OnMoonPhaseStateDirty)
+				self.inst:WatchWorldState("moonphase", OnMoonPhaseStateDirty)
 			end
 		end
 		
