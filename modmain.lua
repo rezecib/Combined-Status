@@ -144,6 +144,9 @@ local function BadgePostConstruct(self)
 	function self:CombinedStatusUpdateNumbers(max)
 		-- avoid updating numbers on hidden badges
 		if not self.active then return end
+		if self._iswandaoldagebadge then
+			max = GLOBAL.TUNING.WANDA_MAX_YEARS_OLD
+		end
 		local maxnum_str = tostring(math.ceil(max or 100))
 		self.maxnum:SetString(maxtxt..maxnum_str)
 		if SHOWDETAILEDSTATNUMBERS then
@@ -254,6 +257,13 @@ local function InspirationBadgePostConstruct(self)
 end
 if DST and SHOWSTATNUMBERS and GLOBAL.kleifileexists("scripts/widgets/inspirationbadge.lua") then
 	AddClassPostConstruct("widgets/inspirationbadge", InspirationBadgePostConstruct)
+end
+
+local function OldAgeBadgePostConstruct(self)
+	self._iswandaoldagebadge = true
+end
+if DST and SHOWSTATNUMBERS and GLOBAL.kleifileexists("scripts/widgets/wandaagebadge.lua") then
+	AddClassPostConstruct("widgets/wandaagebadge", OldAgeBadgePostConstruct)
 end
 
 local function FindSeasonTransitions()
