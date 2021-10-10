@@ -1,6 +1,7 @@
 Assets = {
 	Asset("ATLAS", "images/status_bgs.xml"),
 	Asset("ATLAS", "images/rain.xml"),
+	Asset("IMAGE", "images/rain.tex"),
 	
 	--Note that the default behavior actually uses these for waxing, based on N Hemisphere moon
 	Asset("ANIM", "anim/moon_waning_phases.zip"),
@@ -571,7 +572,7 @@ local function StatusPostConstruct(self)
 		self.worldtemp:SetPosition(65.5, nudge)
 		if SHOWTEMPBADGES then
 			if DST then
-				self.worldtempbadge = self:AddChild(PlayerBadge(self.owner.prefab, {80/255, 60/255, 30/255, 1}, false, 0))
+				self.worldtempbadge = self:AddChild(PlayerBadge("", {80/255, 60/255, 30/255, 1}, false, 0))
 				self.worldtempbadge.head:SetTexture("images/rain.xml", "rain.tex")
 			else
 				self.worldtempbadge = self:AddChild(PlayerBadge(self.owner.prefab, {80/255, 60/255, 30/255, 1}, {atlas="images/rain.xml", image="rain.tex"}))
