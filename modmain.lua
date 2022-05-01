@@ -641,15 +641,23 @@ local function StatusPostConstruct(self)
 	end
 	
 	if DST then
-		if self.inspirationbadge ~= nil then
-			self.inspirationbadge:SetPosition(-62, -52)
+		local ex, ey = -62, -52
+		local function MoveExtraBadge()
+			local extrabadge = self.inspirationbadge or self.mightybadge
+			if extrabadge ~= nil then
+				extrabadge:SetPosition(ex, ey)
+			end			
 		end
+		MoveExtraBadge()
 		local OldAddInspiration = self.AddInspiration
 		self.AddInspiration = function(self, ...)
 			OldAddInspiration(self, ...)
-			if self.inspirationbadge ~= nil then
-				self.inspirationbadge:SetPosition(-62, -52)
-			end
+			MoveExtraBadge()
+		end
+		local OldAddMightiness = self.AddMightiness
+		self.AddMightiness = function(self, ...)
+			OldAddMightiness(self, ...)
+			MoveExtraBadge()
 		end
 	end
 	
