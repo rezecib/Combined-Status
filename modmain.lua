@@ -240,8 +240,12 @@ local function MoistureMeterPostConstruct(self)
 	self.num:Hide()
 	self.bg:Hide()
 end
+-- DST is included because it's considered ROG
 if ROG or CSW or HML then
 	AddClassPostConstruct("widgets/moisturemeter", MoistureMeterPostConstruct)
+end
+if DST then
+	AddClassPostConstruct("widgets/wx78moisturemeter", MoistureMeterPostConstruct)
 end
 
 local function InspirationBadgePostConstruct(self)
@@ -416,6 +420,15 @@ local function ControlsPostConstruct(self)
 	end
 	
 	self.sidepanel:SetPosition(-100, -70)
+	
+	if self.secondary_status then
+		local pos = self.secondary_status:GetPosition()
+		-- I'm only moving it for the standard position; for splitscreen etc I don't actually know where to move it
+		if pos and pos.x == 0 and pos.y == -110 and pos.z == 0 then
+			self.secondary_status:SetPosition(0, COMPACTSEASONS and -210 or -170, 0)
+			self.secondary_status:MoveToBack()
+		end
+	end
 	
 	local _SetHUDSize = self.SetHUDSize
 	function self:SetHUDSize()
