@@ -656,10 +656,13 @@ local function StatusPostConstruct(self)
 	if DST then
 		local ex, ey = -62, -52
 		local function MoveExtraBadge()
-			local extrabadge = self.inspirationbadge or self.mightybadge
+			local extrabadge = self.inspirationbadge or self.mightybadge or self.pethealthbadge
 			if extrabadge ~= nil then
 				extrabadge:SetPosition(ex, ey)
-			end			
+			end
+			if self.boatmeter then
+				self.boatmeter:SetPosition(extrabadge ~= nil and -124 or -62, -52)
+			end
 		end
 		MoveExtraBadge()
 		local OldAddInspiration = self.AddInspiration
@@ -674,18 +677,6 @@ local function StatusPostConstruct(self)
 		end
 	end
 	
-	local _boatx = -62
-	if self.pethealthbadge or self.inspirationbadge then
-		_boatx = _boatx - 62
-	end
-	if self.pethealthbadge then
-		self.pethealthbadge:SetPosition(-62, -52)
-	end
-	
-	if self.boatmeter then
-		self.boatmeter:SetPosition(_boatx, -52)
-	end
-		
 	-- Puppy Princess Musha badge fix
 	self.inst:DoTaskInTime(5, function()
 		if self.staminab and self.staminab.bg then
