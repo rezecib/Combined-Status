@@ -448,14 +448,14 @@ local function ControlsPostConstruct(self)
 			self.moisturemeter.num:Hide()
 		end
 		for _,badge in pairs(badges) do
-			if badge and badge.maxnum and badge.active then
+			if badge and badge.inst:IsValid() and badge.maxnum and badge.active then
 				badge.maxnum:Show()
 			end
 		end
 	end
 	function statusholder:HideStatusNumbers()
 		for _,badge in pairs(badges) do
-			if badge and badge.maxnum then
+			if badge and badge.inst:IsValid() and badge.maxnum then
 				badge.maxnum:Hide()
 			end
 		end
