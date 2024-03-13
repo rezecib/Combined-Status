@@ -276,17 +276,17 @@ if DST and SHOWSTATNUMBERS and GLOBAL.kleifileexists("scripts/widgets/wandaageba
 end
 
 local function FindSeasonTransitions()
-    if DST then
-        local seasons_trans = {"autumn", "winter", "spring", "summer"}
-        --IsShipwreckedWorld and IsPorkWorld are defined in Island Adventures.
-        if HAS_MOD.ISLAND_ADVENTURES then --This can all be one tertiary, but for claritys sake I made this its own statement
-            return GLOBAL.IsShipwreckedWorld() and {"mild", "wet", "green", "dry"}
-                or GLOBAL.IsPorkWorld() and {"temperate", "humid", "lush"}
-                or seasons_trans
-        end
+	if DST then
+		local seasons_trans = {"autumn", "winter", "spring", "summer"}
+		--IsShipwreckedWorld and IsPorkWorld are defined in Island Adventures.
+		if HAS_MOD.ISLAND_ADVENTURES then --This can all be one tertiary, but for claritys sake I made this its own statement
+			return GLOBAL.IsShipwreckedWorld() and {"mild", "wet", "green", "dry"}
+				or GLOBAL.IsPorkWorld() and {"temperate", "humid", "lush"}
+				or seasons_trans
+		end
 
-        return seasons_trans
-    end
+		return seasons_trans
+	end
 	local season_trans = {}
 	-- scrape the SeasonManager's length data to see what seasons are enabled (covers Hamlet, Shipwrecked, RoG, Vanilla)
 	local longest_season_str = 0
