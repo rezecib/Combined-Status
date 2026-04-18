@@ -113,13 +113,29 @@ local function BadgePostConstruct(self)
 	self.bg:SetPosition(-.5, -40, 0)
 	
 	self.num:SetFont(GLOBAL.NUMBERFONT)
-	self.num:SetSize(SHOWDETAILEDSTATNUMBERS and 20 or 28)
-	self.num:SetPosition(2, -40.5, 0)
-	self.num:SetScale(1,.78,1)
+	local function UpdatePositionAndScale(badge)
+		if not badge.num then return end
+
+		badge.num:SetSize(SHOWDETAILEDSTATNUMBERS and 20 or 28)
+		badge.num:SetPosition(2, -40.5, 0)
+		badge.num:SetScale(1,.78,1)
+	end
+	UpdatePositionAndScale(self)
 
 	self.num:MoveToFront()
 	if self.active then
 		self.num:Show()
+	end
+
+	if self.UpdateNums then -- only called for health
+		local _UpdateNums = self.UpdateNums
+		self.UpdateNums = function (self, ...)
+			_UpdateNums(self, ...)
+			UpdatePositionAndScale(self)
+			if self.focus and self.wxshieldanimnum then
+				self.wxshieldanimnum:Hide()
+			end
+		end
 	end
 
 	badges[self] = self
@@ -131,6 +147,9 @@ local function BadgePostConstruct(self)
 	local OldOnGainFocus = self.OnGainFocus
 	function self:OnGainFocus()
 		OldOnGainFocus(self)
+		if self.wxshieldanimnum then
+			self.wxshieldanimnum:Hide()
+		end
 		if self.active then
 			self.maxnum:Show()
 		end
@@ -140,6 +159,9 @@ local function BadgePostConstruct(self)
 	function self:OnLoseFocus()
 		OldOnLoseFocus(self)
 		self.maxnum:Hide()
+		if self.wxshieldanimnum and self.wxshieldanimflicker.shown then
+			self.wxshieldanimnum:Show()
+		end
 		if self.active then
 			self.num:Show()
 		end
