@@ -303,7 +303,7 @@ local function FindSeasonTransitions()
 		--IsShipwreckedWorld and IsPorkWorld are defined in Island Adventures.
 		if HAS_MOD.ISLAND_ADVENTURES then --This can all be one tertiary, but for claritys sake I made this its own statement
 			return GLOBAL.IsShipwreckedWorld() and {"mild", "wet", "green", "dry"}
-				or GLOBAL.IsPorkWorld() and {"temperate", "humid", "lush"}
+				or GLOBAL.IsPorkWorld() and {"temperate", "humid", "lush", "aporkalypse"}
 				or seasons_trans
 		end
 

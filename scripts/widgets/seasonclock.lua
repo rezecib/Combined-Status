@@ -307,22 +307,16 @@ function SeasonClock:GetSeasonLengths()
 	return lengths
 end
 
-function SeasonClock:OnSeasonLengthsChanged(data)
-	--Technically this misbehaves a little if there's a short initial season
-	-- followed by an endless season; it only displays the endless season
-	--However, I'm leaving this behavior in because a solution would be messy and potentially ambiguous
-	if data == nil then
-		data = self:GetSeasonLengths()
-	end
+function SeasonClock:CalculateSegmentColors(season_lengths)
 	local lengths = {}
 	local total = 0
-	for k,v in pairs(data) do
+	for k,v in pairs(season_lengths) do
 		total = total + v
 	end
 	local multiplier = NUM_SEGS/total
 	local residuals = {}
 	total = 0
-	for k,v in pairs(data) do
+	for k,v in pairs(season_lengths) do
 		local length = v*multiplier
 		lengths[k] = math.floor(length)
 		total = total + lengths[k]
@@ -356,6 +350,23 @@ function SeasonClock:OnSeasonLengthsChanged(data)
 
 		seg:SetTint(color.x, color.y, color.z, 1)
     end
+end
+
+function SeasonClock:OnSeasonLengthsChanged(data)
+	--Technically this misbehaves a little if there's a short initial season
+	-- followed by an endless season; it only displays the endless season
+	--However, I'm leaving this behavior in because a solution would be messy and potentially ambiguous
+	if data == nil then
+		data = self:GetSeasonLengths()
+	end
+	-- asgerrr: for IA-side practical reasons, the pre-aporkalypse season is not networked, so something else must be done. i also happen to prefer that the clock shows something useful during aporkalypse
+	if self._dst and TheWorld.state.isaporkalypse then
+		for season, _ in data do
+			if season ~= "aporkalypse" then data[season] = 0 end
+		end
+	end
+	self:CalculateSegmentColors(data)
+
 	-- Although the seasons component pushes a seasontick after seasonlengthschanged,
 	-- the delay we have on the event listener can cause them to get out of order
 	-- since it's not really that expensive, just run it again to ensure it has the right numbers
@@ -367,7 +378,7 @@ function SeasonClock:OnCyclesChanged(data)
 	local i = 1
 	local season = self._dst and TheWorld.state.season or GetSeasonManager():GetSeason()
 	local aporkalypse = false
-	if SEASONS.APORKALYPSE and season == SEASONS.APORKALYPSE then
+	if not self._dst and SEASONS.APORKALYPSE and season == SEASONS.APORKALYPSE then
 		-- Aporkalypse doesn't have a place on the clock, so use the previous "paused" season
 		season = GetSeasonManager().pre_aporkalypse_season or SEASONS.TEMPERATE
 		aporkalypse = true
