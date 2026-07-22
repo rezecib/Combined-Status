@@ -69,8 +69,6 @@ GLOBAL.TUNING.COMBINED_STATUS_UNITS = UNITS
 GLOBAL.TUNING.COMBINED_STATUS_UNIT = UNIT
 
 local CHECK_MODS = {
-	["workshop-1402200186"] = "TROPICAL",
-	["workshop-874857181"] = "CHINESE",
 	["workshop-2189004162"] = "INSIGHT",
 }
 local HAS_MOD = {}
@@ -236,7 +234,7 @@ local function BoatBadgePostConstruct(self)
 	self.num:MoveToFront()
 	self.num:Show()
 end
-if (CSW or HML or HAS_MOD.TROPICAL) and SHOWSTATNUMBERS then
+if (CSW or HML) and SHOWSTATNUMBERS then
 	AddPrefabPostInit("world", function()
 		AddClassPostConstruct("widgets/boatbadge", BoatBadgePostConstruct)
 	end)
@@ -442,18 +440,17 @@ end
 
 local function ControlsPostConstruct(self)
 	if self.clock then
-		if not HAS_MOD.CHINESE then
-			if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
-				self.clock.text_upper:SetScale(.8, .8, 0)
-				self.clock.text_lower:SetScale(.8, .8, 0)
-			else
-				local text = DST and "_text" or "text"
-				self.clock[text]:SetPosition(5, 0)
-				self.clock[text]:SetScale(.8, .8, 0)
-			end
+		if self.clock.text_upper then --should only be in Shipwrecked(-compatible) worlds
+			self.clock.text_upper:SetScale(.8, .8, 0)
+			self.clock.text_lower:SetScale(.8, .8, 0)
+		else
+			local text = DST and "_text" or "text"
+			self.clock[text]:SetPosition(5, 0)
+			self.clock[text]:SetScale(.8, .8, 0)
 		end
+
 		if SHOWSEASONCLOCK then
-			self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT, HAS_MOD.CHINESE))
+			self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT, isCH))
 			self.seasonclock:SetPosition(50, 10)
 			self.seasonclock:SetScale(0.8, 0.8, 0.8)
 			self.clock:SetPosition(-50, 10)

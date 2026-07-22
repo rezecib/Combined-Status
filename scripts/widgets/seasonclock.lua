@@ -33,20 +33,6 @@ local COLOURS =
 	APORKALYPSE = Vector3(205 / 255, 79 / 255, 57 / 255),
 }
 local DARKEN_PERCENT = .75
-local chinese_languages =
-{
-	zh = true, --Chinese for Steam
-	zhr = true, --Chinese for WeGame
-	ch = true, --Chinese mod
-	chs = true, --Chinese mod
-	sc = true, --simple Chinese
-	chinese = true, --Chinese mod
-	zht = true, --traditional Chinese for Steam
-	tc = true, --traditional Chinese
-	cht = true, --Chinese mod
-}
-local lang = rawget(_G, "LanguageTranslator") and LanguageTranslator.defaultlang
-local isCH = lang and chinese_languages[lang]
 
 --------------------------------------------------------------------------
 --[[ Constructor ]]
@@ -120,7 +106,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 		self._hands:SetClickable(false)
 	end
 
-    self._text = self:AddChild(Text(BODYTEXTFONT, ((self._show_clock_text or self._chinese) and 1 or 0.75) * 33 / basescale))
+    self._text = self:AddChild(Text(BODYTEXTFONT, ((self._show_clock_text) and 1 or 0.75) * 33 / basescale))
     self._text:SetPosition(5, 0 / basescale, 0)
 
     --Default initialization
@@ -260,7 +246,7 @@ function SeasonClock:GetRemainingString()
 	days_left = days_left == 10000 and "∞" or days_left
 	-- unfortunately no good string to capture translations of "left"
 	local days_str = STRINGS.UI.HUD.CLOCKDAYS or STRINGS.UI.DEATHSCREEN.DAYS
-    return isCH and ("还剩\n" .. days_left .. " " .. days_str) or (days_left .. " " .. days_str:lower() .. "\n" .. "left")
+    return self._chinese and ("还剩\n" .. days_left .. " " .. days_str) or (days_left .. " " .. days_str:lower() .. "\n" .. "left")
 end
 
 --------------------------------------------------------------------------
@@ -404,7 +390,7 @@ function SeasonClock:OnCyclesChanged(data)
 		i = i + 1
 	end
 	if season ~= self.seasons[i] then -- The current season wasn't in our list of current seasons
-		self._text:SetString(isCH and "未知" or "FAILED") -- Let the user know something is wrong
+		self._text:SetString(self._chinese and "未知" or "FAILED") -- Let the user know something is wrong
 		self.inst:DoTaskInTime(0, function() self:OnCyclesChanged() end) -- Try again next tick
 		return -- Don't continue with the bad data
 	end
