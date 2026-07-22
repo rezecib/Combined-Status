@@ -2,11 +2,26 @@ Assets = {
 	Asset("ATLAS", "images/status_bgs.xml"),
 	Asset("ATLAS", "images/rain.xml"),
 	Asset("IMAGE", "images/rain.tex"),
-	
+
 	--Note that the default behavior actually uses these for waxing, based on N Hemisphere moon
 	Asset("ANIM", "anim/moon_waning_phases.zip"),
 	Asset("ANIM", "anim/moon_aporkalypse_waning_phases.zip"),
 }
+
+local chinese_languages =
+{
+	zh = true, --Chinese for Steam
+	zhr = true, --Chinese for WeGame
+	ch = true, --Chinese mod
+	chs = true, --Chinese mod
+	sc = true, --simple Chinese
+	chinese = true, --Chinese mod
+	zht = true, --traditional Chinese for Steam
+	tc = true, --traditional Chinese
+	cht = true, --Chinese mod
+}
+local lang = GLOBAL.rawget(GLOBAL, "LanguageTranslator") and GLOBAL.LanguageTranslator.defaultlang
+local isCH = lang and chinese_languages[lang]
 
 local function CheckDlcEnabled(dlc)
 	-- if the constant doesn't even exist, then they can't have the DLC
@@ -69,7 +84,7 @@ for k,v in pairs(GLOBAL.KnownModIndex:GetModsToLoad()) do
 	if mod_type then
 		HAS_MOD[mod_type] = v
 	end
-	
+
     local modinfo = GLOBAL.KnownModIndex:GetModInfo(v)
     -- Have to special-case this check because there are so many variants of RPG HUD that this is really the best way to check
     if string.match(modinfo.name or "", "RPG HUD") then
@@ -98,20 +113,20 @@ local function BadgePostConstruct(self)
 	if self.active == nil then
 		self.active = true
 	end
-	
+
 	self:SetScale(.9,.9,.9)
 	-- Make sure that badge scaling animations are adjusted accordingly (e.g. WX's upgrade animation)
 	local _ScaleTo = self.ScaleTo
 	self.ScaleTo = function(self, from, to, ...)
 		return _ScaleTo(self, from*.9, to*.9, ...)
 	end
-	
+
 	if not SHOWSTATNUMBERS then return end
-	
+
 	self.bg = self:AddChild(Image("images/status_bgs.xml", "status_bgs.tex"))
 	self.bg:SetScale(SHOWDETAILEDSTATNUMBERS and 0.55 or .4,.43,0)
 	self.bg:SetPosition(-.5, -40, 0)
-	
+
 	self.num:SetFont(GLOBAL.NUMBERFONT)
 	local function UpdatePositionAndScale(badge)
 		if not badge.num then return end
@@ -143,7 +158,7 @@ local function BadgePostConstruct(self)
 	self.maxnum:SetPosition(6, 0, 0)
 	self.maxnum:MoveToFront()
 	self.maxnum:Hide()
-	
+
 	local OldOnGainFocus = self.OnGainFocus
 	function self:OnGainFocus()
 		OldOnGainFocus(self)
@@ -166,8 +181,8 @@ local function BadgePostConstruct(self)
 			self.num:Show()
 		end
 	end
-	
-	local maxtxt = SHOWMAXONNUMBERS and "Max:\n" or ""
+
+	local maxtxt = SHOWMAXONNUMBERS and (isCH and "最大值:\n" or "Max:\n") or ""
 	function self:CombinedStatusUpdateNumbers(max)
 		-- avoid updating numbers on hidden badges
 		if not self.active then return end
@@ -180,7 +195,7 @@ local function BadgePostConstruct(self)
 			self.num:SetString(self.num:GetString().."/"..maxnum_str)
 		end
 	end
-	
+
 	-- for health/hunger/sanity/beaverness
 	local OldSetPercent = self.SetPercent
 	if OldSetPercent then
@@ -189,7 +204,7 @@ local function BadgePostConstruct(self)
 			self:CombinedStatusUpdateNumbers(max)
 		end
 	end
-	
+
 	-- for moisture
 	local OldSetValue = self.SetValue
 	if OldSetValue then
@@ -198,7 +213,7 @@ local function BadgePostConstruct(self)
 			self:CombinedStatusUpdateNumbers(max)
 		end
 	end
-	
+
 	-- for boatmeter in DST
 	local OldRefreshHealth = self.RefreshHealth
 	if OldRefreshHealth then
@@ -213,7 +228,7 @@ AddClassPostConstruct("widgets/badge", BadgePostConstruct)
 local function BoatBadgePostConstruct(self)
 	local nudge = HAS_MOD.RPGHUD and 75 or 12.5
 	self.bg:SetPosition(-.5, nudge-40)
-	
+
 	self.num:SetFont(GLOBAL.NUMBERFONT)
 	self.num:SetSize(SHOWDETAILEDSTATNUMBERS and 20 or 28)
 	self.num:SetPosition(2, nudge-40.5)
@@ -389,7 +404,7 @@ local function AddSeasonBadge(self)
 			local seasonstr = DST
 				and GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[season_trans[season_i]:upper()]
 				or GLOBAL.STRINGS.UI.SANDBOXMENU[season_trans[season_i]:upper()]
-			self.season.num:SetString(days .. " to\n" .. seasonstr)
+			self.season.num:SetString((days == 10000 and "∞" or days) .. (isCH and " 天后\n" or " to\n") .. seasonstr)
 		else -- show current season progress
 			local seasonstr = DST
 				and GLOBAL.STRINGS.UI.SERVERLISTINGSCREEN.SEASONS[season:upper()]
@@ -446,7 +461,7 @@ local function ControlsPostConstruct(self)
 		elseif MICROSEASONS then
 			AddSeasonBadge(self)
 		end
-		
+
 		if not DST and GLOBAL.GetWorld():IsCave() then
 			if not HIDECAVECLOCK then
 				self.clock:Show()
@@ -454,9 +469,9 @@ local function ControlsPostConstruct(self)
 			self.status:SetPosition(0, -110)
 		end
 	end
-	
+
 	self.sidepanel:SetPosition(-100, -70)
-	
+
 	if self.secondary_status then
 		local pos = self.secondary_status:GetPosition()
 		-- I'm only moving it for the standard position; for splitscreen etc I don't actually know where to move it
@@ -465,7 +480,7 @@ local function ControlsPostConstruct(self)
 			self.secondary_status:MoveToBack()
 		end
 	end
-	
+
 	local _SetHUDSize = self.SetHUDSize
 	function self:SetHUDSize()
 		_SetHUDSize(self)
@@ -473,7 +488,7 @@ local function ControlsPostConstruct(self)
 		self.topright_root:SetScale(scale)
 	end
 	self:SetHUDSize()
-	
+
 	-- Show/hide maxnum but not num when asked to show/hide (e.g. for Controller Inventory)
 	local statusholder = DST and self.status or self
 	_ShowStatusNumbers = statusholder.ShowStatusNumbers
@@ -495,7 +510,7 @@ local function ControlsPostConstruct(self)
 				badge.maxnum:Hide()
 			end
 		end
-	end	
+	end
 end
 if not DST or GLOBAL.TheNet:GetServerGameMode() ~= "lavaarena" then
 	AddClassPostConstruct("widgets/controls", ControlsPostConstruct)
@@ -534,9 +549,9 @@ local function StatusPostConstruct(self)
 		self.heart.effigyanim:SetPosition(45, 50)
 		self.resurrectbutton:SetPosition(0, 25)
 	end
-	
+
 	local nudge = 0
-	if SHOWNAUGHTINESS then	
+	if SHOWNAUGHTINESS then
 		self.naughtiness = self:AddChild(Minibadge("naughtiness", self.owner))
 		local function UpdateNaughty(_, data) -- player, data
 			if DST then
@@ -579,8 +594,8 @@ local function StatusPostConstruct(self)
 		end
 		nudge = nudge - 30
 	end
-	
-	if SHOWTEMPERATURE then	
+
+	if SHOWTEMPERATURE then
 		self.temperature = self:AddChild(Minibadge("temperature", self.owner))
 		self.inst:ListenForEvent("temperaturedelta",
 			function(inst)
@@ -601,7 +616,7 @@ local function StatusPostConstruct(self)
 		end
 		nudge = nudge - 30
 	end
-	
+
 	if SHOWWORLDTEMP then
 		self.worldtemp = self:AddChild(Minibadge("temperature", self.owner))
 		local function updatetemp(val)
@@ -634,21 +649,21 @@ local function StatusPostConstruct(self)
 			self.worldtemp.num:SetScale(0.9, .7, 1)
 		end
 	end
-	
+
 	-- The badge anims aren't actually aligned identically, so this fixes them
 	-- OCD, I know, but it was really obvious with beaverness + wetness next to each other
 	self.stomach.anim:SetPosition(0, -2) --move stomach down 2 pixels
 	-- if not DST then self.brain.anim:SetPosition(0, -2, 0) end -- check this for DST too?
 	--move moisturemeter down 1 pixel
 	--move beaverness up 1 pixel; this needs to be done in the AddBeaverness/SetBeaverMode functions
-	
+
 	if self.moisturemeter then
 		self.moisturemeter:SetPosition(0, SHOWSEASONCLOCK and -52 or -80)
 		self.moisturemeter.anim:SetPosition(0, -1)
 	end
-	
+
 	if COMPACTSEASONS then AddSeasonBadge(self) end
-	
+
 	if DST then
 		--Note this is deprecated now in DST but might as well keep it for backwards-compatibility.
 		--DST-only functions for Beaverness
@@ -660,9 +675,9 @@ local function StatusPostConstruct(self)
 				self.beaverness.anim:SetPosition(0, 1) -- animation alignment fix
 			end
 		end
-		
+
 		-- RemoveBeaverness never gets called... but if at some point it does, I might have issues here
-		
+
 		local OldSetBeaverMode = self.SetBeaverMode
 		self.SetBeaverMode = function(self, beavermode, ...)
 			OldSetBeaverMode(self, beavermode, ...)
@@ -688,7 +703,7 @@ local function StatusPostConstruct(self)
 		end, self.owner)
 		self.owner.components.beaverness:DoDelta(0, true)
 	end
-	
+
 	if DST then
 		local ex, ey = -62, -52
 		local function MoveExtraBadge()
@@ -712,7 +727,7 @@ local function StatusPostConstruct(self)
 			MoveExtraBadge()
 		end
 	end
-	
+
 	-- Puppy Princess Musha badge fix
 	self.inst:DoTaskInTime(5, function()
 		if self.staminab and self.staminab.bg then
@@ -727,7 +742,7 @@ local has_proxied_world_clock_day = false
 local function ProxyWorldClockDay()
 	if not has_proxied_world_clock_day then
 		has_proxied_world_clock_day = true
-		
+
 		-- Replace GLOBAL.STRINGS.UI.HUD with a proxy table that uses a metatable to intercept accesses to it
 		-- this allows us to construct WORLD_CLOCKDAY from the current contents of WORLD and WORLD_CLOCKDAY
 		local HUD_original = GLOBAL.STRINGS.UI.HUD
@@ -868,12 +883,12 @@ local function UIClockPostInit(self)
 			end
 		end
 	end
-	
+
 	if DST then
 		ProxyWorldClockDay()
-		
+
 		if self._cave then return end
-		
+
 		--copied code below from components/clock.lua; make sure it stays up-to-date
 		local MOON_PHASE_NAMES =
 		{
@@ -883,7 +898,7 @@ local function UIClockPostInit(self)
 			"threequarter",
 			"full",
 		}
-		local MOON_PHASE_LENGTHS = 
+		local MOON_PHASE_LENGTHS =
 		{
 			new = 1,
 			quarter = 3,
@@ -904,7 +919,7 @@ local function UIClockPostInit(self)
 				table.insert(MOON_PHASE_SLOTS, v)
 			end
 		end
-		
+
 		if SHOWNEXTFULLMOON then
 			self._moonanim.moontext = self._moonanim:AddChild(Text(GLOBAL.NUMBERFONT, 25))
 			self._moonanim.moontext:SetPosition(-83, 22)
@@ -924,7 +939,7 @@ local function UIClockPostInit(self)
 			-- While only the server is perfectly able to do so at first, we can't correct ourselves until the next moonphase dirty.
 			-- Example: full moon is 134, server moon cycle is 11. client moon cycle is 14.
 
-			local default_moon_cycle = (GLOBAL.TheWorld.state.cycles % #MOON_PHASE_SLOTS) + 1 
+			local default_moon_cycle = (GLOBAL.TheWorld.state.cycles % #MOON_PHASE_SLOTS) + 1
 			local inferred_moon_cycle = default_moon_cycle
 			local current_moon_phase = GLOBAL.TheWorld.state.moonphase
 
@@ -988,7 +1003,7 @@ local function UIClockPostInit(self)
 				--print("OnMoonPhaseStateDirty")
 				-- We need a previous to contrast against a current to figure out the current spot 
 				-- Note that "current_moon_phase" in this context isn't actually current, it's the phase that existed before this one.
-				if current_moon_phase ~= moonphase then 
+				if current_moon_phase ~= moonphase then
 					for i,v in pairs(MOON_PHASE_SLOTS) do
 						-- I think this is needed for dealing with waxing.
 						local previous_phase = MOON_PHASE_SLOTS[i-1] or MOON_PHASE_SLOTS[#MOON_PHASE_SLOTS]
@@ -1019,14 +1034,14 @@ local function UIClockPostInit(self)
 				self.inst:WatchWorldState("moonphase", OnMoonPhaseStateDirty)
 			end
 		end
-		
+
 		if SHOWMOONDUSK then
 			--it sucks to have to override the whole thing, but... it hasn't changed in forever, so *shrug*
 			self.OnPhaseChanged = function(self, phase)
 				if self._phase == phase then
 					return
 				end
-				
+
 				if (self._phase == "night" and not SHOWMOONDAY)
 				or (self._phase == "day" and SHOWMOONDUSK) then
 					self._moonanim:GetAnimState():PlayAnimation("trans_in")
@@ -1060,9 +1075,9 @@ local function UIClockPostInit(self)
 
 				self._phase = phase
 			end
-			
+
 			local moonphases = { new = 0, quarter = 1, half = 2, threequarter = 3, full = 4 }
-			
+
 			--Really not sure why they kept in the 2, I would expect it to be reverted without warning, so... catch potential future crash?
 			local moonphasechanged_fname = self.OnMoonPhaseChanged2 and "OnMoonPhaseChanged2" or "OnMoonPhaseChanged"
 			local _OnMoonPhaseChanged = self[moonphasechanged_fname]
@@ -1073,7 +1088,7 @@ local function UIClockPostInit(self)
 				end
 			end
 		end
-		
+
 	else -- Not DST
 		-- Cave clock rim
 		if GLOBAL.GetWorld():IsCave() then
@@ -1084,9 +1099,9 @@ local function UIClockPostInit(self)
 			self.rim:GetAnimState():PlayAnimation("on")
 			self.anim:Hide()
 		end
-	
+
 		-- Moon stuff
-		local moon_syms = 
+		local moon_syms =
 		{
 			new="moon_new",
 			quarter="moon_quarter",
@@ -1094,11 +1109,11 @@ local function UIClockPostInit(self)
 			threequarter="moon_three_quarter",
 			full="moon_full",
 		}
-		
+
 		function self:ShowMoon()
 			local phase, waning = GLOBAL.GetClock():GetMoonPhase()
 			local sym = moon_syms[phase]
-			
+
 			local moon_build = "moon_"
 			local aporkalypse = HML and GLOBAL.GetAporkalypse()
 			if aporkalypse and aporkalypse:IsActive() then
@@ -1108,27 +1123,27 @@ local function UIClockPostInit(self)
 				moon_build = moon_build .. "waning_"
 			end
 			moon_build = moon_build .. "phases"
-			
+
 			self.moonanim:GetAnimState():OverrideSymbol("swap_moon", moon_build, sym or "moon_full")
-			self.moonanim:GetAnimState():PlayAnimation("trans_out") 
-			self.moonanim:GetAnimState():PushAnimation("idle", true) 
+			self.moonanim:GetAnimState():PlayAnimation("trans_out")
+			self.moonanim:GetAnimState():PushAnimation("idle", true)
 		end
-		
+
 		if SHOWMOONDAY or GLOBAL.GetClock():IsNight() or (SHOWMOONDUSK and GLOBAL.GetClock():IsDusk()) then
 			self:ShowMoon()
 		end
-		
+
 		if SHOWMOONDAY then
-			self.inst:ListenForEvent( "daytime", function(inst, data) 
+			self.inst:ListenForEvent( "daytime", function(inst, data)
 				self:ShowMoon()
 			end, GLOBAL.GetWorld())
 		elseif SHOWMOONDUSK then
-			self.inst:ListenForEvent( "dusktime", function(inst, data) 
+			self.inst:ListenForEvent( "dusktime", function(inst, data)
 				self:ShowMoon()
 			end, GLOBAL.GetWorld())
-		
+
 		end
-		
+
 		if SHOWNEXTFULLMOON then
 			self.moonanim.moontext = self.moonanim:AddChild(Text(GLOBAL.NUMBERFONT, 25))
 			self.moonanim.moontext:SetPosition(-83, 22)
@@ -1154,7 +1169,7 @@ AddClassPostConstruct("widgets/uiclock", UIClockPostInit)
 
 if not DST and SHOWWANINGMOON then
 	local function ClockPostInit(self)
-		local moonphases = 
+		local moonphases =
 		{
 			"new",
 			"quarter",
@@ -1162,23 +1177,23 @@ if not DST and SHOWWANINGMOON then
 			"threequarter",
 			"full",
 		}
-		
+
 		function self:GetMoonPhase()
 			if self.bloodmoon_active then
 				return "full"
 			end
-			
+
 			local phaselength = 2
 			local n = #moonphases-1
-			
+
 			local idx = math.floor(self.numcycles/phaselength) % (2*n)
 			local waning = false
-			
+
 			if idx >= n then
 				idx = n*2 - idx
 				waning = true
 			end
-			
+
 			return moonphases[idx+1], waning
 		end
 	end
