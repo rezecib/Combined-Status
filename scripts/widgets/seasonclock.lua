@@ -12,20 +12,20 @@ local UIAnim = require "widgets/uianim"
 --------------------------------------------------------------------------
 
 local NUM_SEGS = 32
-local COLOURS = 
+local COLOURS =
 {
 	-- Normal seasons
 	AUTUMN = Vector3(205 / 255, 79 / 255, 57 / 255),
 	WINTER = Vector3(149 / 255, 191 / 255, 242 / 255),
 	SPRING = Vector3(84 / 168, 200 / 255, 84 / 255),
 	SUMMER = Vector3(255 / 255, 206 / 255, 139 / 255),
-	
+
 	-- Shipwrecked seasons
 	MILD = Vector3(255 / 255, 206 / 255, 139 / 255),	-- Mild
 	WET = Vector3(149 / 255, 191 / 255, 242 / 255),		-- Hurricane
 	GREEN = Vector3(84 / 168, 200 / 255, 84 / 255),		-- Monsoon
 	DRY = Vector3(205 / 255, 79 / 255, 57 / 255),		-- Dry
-	
+
 	-- Hamlet seasons
 	TEMPERATE = Vector3(255 / 255, 206 / 255, 139 / 255),
 	HUMID = Vector3(149 / 255, 191 / 255, 242 / 255),
@@ -95,7 +95,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
         self._rim = self:AddChild(Image("images/hud.xml", "clock_rim.tex"))
         self._rim:SetClickable(false)
     end
-	
+
 	if self._dst and self._cave then
 		self._hands = self:AddChild(Widget("clockhands"))
 		self._hands._img = self._hands:AddChild(Image("images/hud.xml", "clock_hand.tex"))
@@ -106,15 +106,15 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 		self._hands:SetClickable(false)
 	end
 
-    self._text = self:AddChild(Text(BODYTEXTFONT, ((self._show_clock_text or self._chinese) and 1 or 0.75) * 33 / basescale))
+    self._text = self:AddChild(Text(BODYTEXTFONT, ((self._show_clock_text) and 1 or 0.75) * 33 / basescale))
     self._text:SetPosition(5, 0 / basescale, 0)
 
     --Default initialization
     self:OnLoseFocus()
-	
+
     self:OnSeasonLengthsChanged()
 	self:OnCyclesChanged()
-	
+
     --Register events
 	if self._dst then
 		local function listen_for_event_delayed(event, fn)
@@ -130,10 +130,10 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 	else
 		--Because SeasonManager doesn't push events when season lengths are changed,
 		-- we add an interceptor to the SeasonManager to catch the variable assignment (gross...)
-		
+
 		local seasonmanager = GetSeasonManager()
 		local sm_seasonlengths = {}
-		
+
 		-- move the existing season lengths into our local table
 		for key,val in pairs(seasonmanager) do
 			if type(key) == "string" and key:match("length$") then
@@ -158,7 +158,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 				return sm_mt_index(sm, key)
 			end
 		end
-		
+
 		-- intercept table assignment so we know when season lengths change
 		local sm_mt_newindex = sm_mt.__newindex
 		sm_mt.__newindex = function(sm, key, val)
@@ -173,7 +173,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 				rawset(sm, key, val)
 			end
 		end
-		
+
 		self.inst:ListenForEvent("daycomplete", function(inst, data)
 			self.inst:DoTaskInTime(0, function()
 				self:OnCyclesChanged()
@@ -201,8 +201,8 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 				if data.phase == "day" then
 					local segs = 16
 					if math.floor(t * segs) > 0 and math.floor(t * segs) ~= math.floor(self._old_t * segs) then
-						self._anim:GetAnimState():PlayAnimation("pulse_day") 
-						self._anim:GetAnimState():PushAnimation("idle_day", true)            
+						self._anim:GetAnimState():PlayAnimation("pulse_day")
+						self._anim:GetAnimState():PushAnimation("idle_day", true)
 					end
 				end
 				self._old_t = t
@@ -234,7 +234,7 @@ function SeasonClock:GetSeasonString()
 end
 
 function SeasonClock:GetRemainingString()
-	local days_left = ""
+	local days_left
 	if self._dst then
 		days_left = TheWorld.state.remainingdaysinseason
 	else
@@ -242,9 +242,11 @@ function SeasonClock:GetRemainingString()
 		-- days_left = GetSeasonManager():GetDaysLeftInSeason()
 		days_left = (1-GetSeasonManager().percent_season) * GetSeasonManager():GetSeasonLength()
 	end
+	days_left = math.floor(days_left+0.5)
+	days_left = days_left == 10000 and "∞" or days_left
 	-- unfortunately no good string to capture translations of "left"
 	local days_str = STRINGS.UI.HUD.CLOCKDAYS or STRINGS.UI.DEATHSCREEN.DAYS
-    return math.floor(days_left+0.5) .. " " .. days_str:lower() .. "\n" .. "left"
+    return self._chinese and ("还剩\n" .. days_left .. " " .. days_str) or (days_left .. " " .. days_str:lower() .. "\n" .. "left")
 end
 
 --------------------------------------------------------------------------
@@ -259,7 +261,7 @@ function SeasonClock:OnGainFocus()
 		self._text:Show()
 		self._text:SetString(self:GetSeasonString() .. "\n" .. self:GetRemainingString())
 	end
-	self._have_focus = true	
+	self._have_focus = true
     return true
 end
 
@@ -278,7 +280,7 @@ function SeasonClock:GetSeasonLength(season)
 	if self._dst then
 		return TheWorld.state[season .. "length"] or TUNING[season:upper() .. "_LENGTH"]
 	else -- should work for Vanilla, RoG, and Shipwrecked
-		local sm = GetSeasonManager()		
+		local sm = GetSeasonManager()
 		if sm.seasonmode:find("endless") then
 			local begin,finish = sm.seasonmode:find("endless")
 			local endless_season = sm.seasonmode:sub(finish+1)
@@ -339,9 +341,9 @@ function SeasonClock:CalculateSegmentColors(season_lengths)
 			season = season + 1
 			runningtotal = i - 1
 		end
-		
+
 		seg:Show()
-		
+
 		local color = COLOURS[self.seasons[season]:upper()]
 		if dark then
 			color = color * DARKEN_PERCENT
@@ -388,7 +390,7 @@ function SeasonClock:OnCyclesChanged(data)
 		i = i + 1
 	end
 	if season ~= self.seasons[i] then -- The current season wasn't in our list of current seasons
-		self._text:SetString("FAILED") -- Let the user know something is wrong
+		self._text:SetString(self._chinese and "未知" or "FAILED") -- Let the user know something is wrong
 		self.inst:DoTaskInTime(0, function() self:OnCyclesChanged() end) -- Try again next tick
 		return -- Don't continue with the bad data
 	end
