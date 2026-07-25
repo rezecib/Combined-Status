@@ -361,7 +361,7 @@ function SeasonClock:OnSeasonLengthsChanged(data)
 	end
 	-- asgerrr: for IA-side practical reasons, the pre-aporkalypse season is not networked, so something else must be done. i also happen to prefer that the clock shows something useful during aporkalypse
 	if self._dst and TheWorld.state.isaporkalypse then
-		for season, _ in data do
+		for season, _ in pairs(data) do
 			if season ~= "aporkalypse" then data[season] = 0 end
 		end
 	end
