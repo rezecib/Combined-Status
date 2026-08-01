@@ -37,7 +37,7 @@ local DARKEN_PERCENT = .75
 --------------------------------------------------------------------------
 --[[ Constructor ]]
 --------------------------------------------------------------------------
-local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition_fn, show_clock_text, chinese_translation)
+local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition_fn, show_clock_text, ModLanguage)
     Widget._ctor(self, "SeasonClock")
 
     --Member variables
@@ -58,7 +58,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
     self._time = nil
 	self._old_t = 0
 	self._show_clock_text = show_clock_text ~= false
-	self._chinese = chinese_translation
+	self._chinese = ModLanguage == "zh"
 
     local basescale = 1
     self:SetScale(basescale, basescale, basescale)

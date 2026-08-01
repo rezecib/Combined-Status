@@ -8,20 +8,29 @@ Assets = {
 	Asset("ANIM", "anim/moon_aporkalypse_waning_phases.zip"),
 }
 
-local chinese_languages =
-{
-	zh = true, --Chinese for Steam
-	zhr = true, --Chinese for WeGame
-	ch = true, --Chinese mod
-	chs = true, --Chinese mod
-	sc = true, --simple Chinese
-	chinese = true, --Chinese mod
-	zht = true, --traditional Chinese for Steam
-	tc = true, --traditional Chinese
-	cht = true, --Chinese mod
+local _languages = {
+	-- de = "de", --german
+	-- es = "es", --spanish
+	-- fr = "fr", --french
+	-- it = "it", --italian
+	-- ko = "ko", --korean
+	-- --Note: The only language mod I found that uses "pt" is also brazilian portuguese -M
+	-- pt = "pt", --portuguese
+	-- br = "pt", --brazilian portuguese
+	-- pl = "pl", --polish
+	-- ru = "ru", --russian
+	zh = "zh", --Chinese for Steam
+	zhr = "zh", --Chinese for WeGame
+	ch = "zh", --Chinese mod
+	chs = "zh", --Chinese mod
+	sc = "zh", --simple Chinese
+	chinese = "zh", --Chinese mod
+	zht = "zh", --traditional Chinese for Steam
+	tc = "zh", --traditional Chinese
+	cht = "zh", --Chinese mod
 }
-local lang = GLOBAL.rawget(GLOBAL, "LanguageTranslator") and GLOBAL.LanguageTranslator.defaultlang
-local isCH = lang and chinese_languages[lang]
+local ModLanguage = GLOBAL.rawget(GLOBAL, "LanguageTranslator") and GLOBAL.LanguageTranslator.defaultlang and _languages[GLOBAL.LanguageTranslator.defaultlang]
+local isCH = ModLanguage == "zh"
 
 local function CheckDlcEnabled(dlc)
 	-- if the constant doesn't even exist, then they can't have the DLC
@@ -450,7 +459,7 @@ local function ControlsPostConstruct(self)
 		end
 
 		if SHOWSEASONCLOCK then
-			self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT, isCH))
+			self.seasonclock = self.sidepanel:AddChild(GLOBAL.require("widgets/seasonclock")(self.owner, DST, FindSeasonTransitions, SHOWCLOCKTEXT, ModLanguage))
 			self.seasonclock:SetPosition(50, 10)
 			self.seasonclock:SetScale(0.8, 0.8, 0.8)
 			self.clock:SetPosition(-50, 10)

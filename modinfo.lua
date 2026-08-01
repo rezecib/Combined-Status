@@ -109,9 +109,9 @@ configuration_options =
 						},
 						{description = en_zh("Fahrenheit", "华氏"), data = "F",
 							hover = en_zh("Your favorite temperature units that make no sense."
-								.."\nFreeze at 32, overheat at 158; get warned 9 from each.",
+								.."\nFreeze at 32, overheat at 95; get warned 4.5 from each.",
 										  "你最喜欢的奇怪温度单位。"
-								.."\n在32度冻结，在158度过热；每9度警示一次")
+								.."\n在32度冻结，在95度过热；每4.5度警示一次")
 						},
 					},
 		default = "T",
