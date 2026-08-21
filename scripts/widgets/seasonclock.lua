@@ -73,6 +73,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 
     self._face = self:AddChild(Image("images/hud.xml", "clock_NIGHT.tex"))
     self._face:SetClickable(false)
+	self._face:SetScale(0.5)
 
 	-- build each segment on the clock and set its rotation and position
     local segscale = .4
@@ -95,6 +96,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
         self._rim = self:AddChild(Image("images/hud.xml", "clock_rim.tex"))
         self._rim:SetClickable(false)
     end
+	self._rim:SetScale(0.5)
 
 	if self._dst and self._cave then
 		self._hands = self:AddChild(Widget("clockhands"))
@@ -105,6 +107,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 		self._hands = self:AddChild(Image("images/hud.xml", "clock_hand.tex"))
 		self._hands:SetClickable(false)
 	end
+	self._hands:SetScale(0.5)
 
     self._text = self:AddChild(Text(BODYTEXTFONT, ((self._show_clock_text) and 1 or 0.75) * 33 / basescale))
     self._text:SetPosition(5, 0 / basescale, 0)
