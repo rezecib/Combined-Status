@@ -95,8 +95,8 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
     else
         self._rim = self:AddChild(Image("images/hud.xml", "clock_rim.tex"))
         self._rim:SetClickable(false)
+		self._rim:SetScale(0.5)
     end
-	self._rim:SetScale(0.5)
 
 	if self._dst and self._cave then
 		self._hands = self:AddChild(Widget("clockhands"))
