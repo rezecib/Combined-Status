@@ -933,6 +933,12 @@ local function UIClockPostInit(self)
 			self._moonanim.OnLoseFocus = function() self._moonanim.moontext:Hide() end
 			local function PredictNextFullMoon(confident)
 				local today = GLOBAL.TheWorld.state.cycles
+				if GLOBAL.TheWorld.state.moonphase == "full" then
+					self._moonanim.moontext:SetString("" .. (today+1))
+					return
+				end
+				-- Start searching tomorrow unless the current phase is full.(实际不是满月时，从明天开始查找)
+				today = today + 1
 				while (MOON_PHASE_SLOTS[(today+offset)%#MOON_PHASE_SLOTS + 1] ~= "full") do
 					today = today + 1
 				end
@@ -940,104 +946,47 @@ local function UIClockPostInit(self)
 			end
 			self._moonanim.moontext:Hide()
 
-			-- penguin: So with eye of the storm, moon cycles are no longer consistent to happen on certain days. 
-			-- The moon cycle can be started anew at any arbitrary day (I guess you could say the moon cycle gets Altered..), so we need to account for that.
-			-- While only the server is perfectly able to do so at first, we can't correct ourselves until the next moonphase dirty.
-			-- Example: full moon is 134, server moon cycle is 11. client moon cycle is 14.
-
-			local default_moon_cycle = (GLOBAL.TheWorld.state.cycles % #MOON_PHASE_SLOTS) + 1
-			local inferred_moon_cycle = default_moon_cycle
-			local current_moon_phase = GLOBAL.TheWorld.state.moonphase
-
-			-- Check if the current moon phase is the expected moon phase. 
-			if current_moon_phase == MOON_PHASE_SLOTS[((inferred_moon_cycle + offset) % #MOON_PHASE_SLOTS) + 1] then
-				-- We can kind of assume we're on the default moon cycling. May not be accurate if the cycle started anew on a phase with a length more than 1.
-				--print("Seems close to the normal moon cycle?")
-				PredictNextFullMoon(false)
-			else
-				--print("Moon cycle seems different.")
-
-				-- Guess the correct full moon, 50% chance of getting it right. However, consequences of being right/wrong have a stronger impact here.
-				-- If successful, great. I think we'll get up to around 10 days of accuracy early.
-				-- If not, we get corrected in "moonphase" worldstate watcher as usual. I think we'll be off by up to 10 days until we get corrected.
-				-- Doesn't having the previous phase check, hence the stated issue.
-				for i,v in pairs(MOON_PHASE_SLOTS) do
-					if v == current_moon_phase then
-						inferred_moon_cycle = i
-						offset = inferred_moon_cycle - default_moon_cycle
-						PredictNextFullMoon(false)
-						break
-					end
-				end
-			end
-
-			-- Probable race condition based on networking latency. We need both the cycle count and the moon cycle count to be updated.
-			local cycle_updated, moon_cycle_data = true, nil -- true, nil because we have the proper cycle on load but not the moon data yet (if using Insight).
-
-			local function OnMoonCycleDirty(inst, data)
-				if not HAS_MOD.INSIGHT then
-					return
-				end
-
-				if cycle_updated and moon_cycle_data then
-					cycle_updated, moon_cycle_data = false, nil
-				else
-					return
-				end
-
-				--print("OnMoonCycleDirty", data.moon_cycle, default_moon_cycle)
-				if type(data) == "table" and type(data.moon_cycle) == "number" then
-					-- Important Note: It seems that the server moon cycle starts at 1 for new moon, while here the moon cycle starts at 10 for new moon (hence previous default offset of 9?).
-					inferred_moon_cycle = ((data.moon_cycle + 9) % #MOON_PHASE_SLOTS)
-					offset = inferred_moon_cycle - default_moon_cycle
-					--print("\tnew inferred:", inferred_moon_cycle, "default:", default_moon_cycle, "offset:", offset)
-					PredictNextFullMoon(true)
-				end
-			end
-
-			self.inst:WatchWorldState("cycles", function(inst, cycles)
-				--print("client cycle worldstate")
-				default_moon_cycle = (cycles % #MOON_PHASE_SLOTS) + 1
-				inferred_moon_cycle = (inferred_moon_cycle % #MOON_PHASE_SLOTS) + 1
-				current_moon_phase = GLOBAL.TheWorld.state.moonphase -- this event gets called before "moonphase" event so this can be put here.
-
-				cycle_updated = true
-				OnMoonCycleDirty(inst, moon_cycle_data)
-			end)
-
-			local function OnMoonPhaseStateDirty(inst, moonphase)
-				--print("OnMoonPhaseStateDirty")
-				-- We need a previous to contrast against a current to figure out the current spot 
-				-- Note that "current_moon_phase" in this context isn't actually current, it's the phase that existed before this one.
-				if current_moon_phase ~= moonphase then
-					for i,v in pairs(MOON_PHASE_SLOTS) do
-						-- I think this is needed for dealing with waxing.
-						local previous_phase = MOON_PHASE_SLOTS[i-1] or MOON_PHASE_SLOTS[#MOON_PHASE_SLOTS]
-
-						-- If we checked only the *now* moonphase, we could be later in the cycle list but still get stuck "halfway" to where we need.
-						if v == moonphase and previous_phase == current_moon_phase then
-							inferred_moon_cycle = i
-							offset = inferred_moon_cycle - default_moon_cycle
-							--print("INFERRED", inferred_moon_cycle, "default:", default_moon_cycle, "OFFSET:", offset)
-							PredictNextFullMoon(true)
+			local current_moon_phase, current_waxing
+			local confident = false
+			local function UpdateMoonPhase()
+				local state = GLOBAL.TheWorld.state
+				if current_moon_phase ~= state.moonphase or current_waxing ~= state.iswaxingmoon then
+					-- Recalibrate on phase changes, including direct jumps caused by The Lunar Grimoire.(月相变化时重新校准，也支持月之魔典直接跳相)
+					confident = current_moon_phase ~= nil or state.moonphase == "full" or state.moonphase == "new"
+					for i, phase in ipairs(MOON_PHASE_SLOTS) do
+						if phase == state.moonphase and ((i >= 10 and i < 20) == state.iswaxingmoon) then
+							offset = i - 1 - state.cycles
 							break
 						end
 					end
-					current_moon_phase = moonphase
+					current_moon_phase, current_waxing = state.moonphase, state.iswaxingmoon
 				end
+				PredictNextFullMoon(confident)
 			end
+			UpdateMoonPhase()
 
-			if HAS_MOD.INSIGHT then
-				-- I considered doing this directly through a netvar on the world, but I feel like there is more risk in doing that. Especially since there were game crashes recently with netvars attached to TheWorld.
-				-- Event is pushed by Insight when initialized on the client, and whenever the cycle changes.
-				GLOBAL.TheWorld:ListenForEvent("moon_cycle_dirty", function(inst, data)
-					--print("client moon cycle dirty", data.moon_cycle)
-					moon_cycle_data = data
-					OnMoonCycleDirty(inst, data)
-				end)
-			else
-				-- We have to work with predictions.
-				self.inst:WatchWorldState("moonphase", OnMoonPhaseStateDirty)
+			-- Read cycles, phase, and waxing state after this frame's world state updates.(等本帧世界状态更新完成，再一起读取天数、月相和盈亏方向)
+			self.inst:WatchWorldState("cycles", function()
+				self.inst:DoTaskInTime(0, UpdateMoonPhase)
+			end)
+			self.inst:ListenForEvent("moonphasechanged2", function()
+				self.inst:DoTaskInTime(0, UpdateMoonPhase)
+			end, GLOBAL.TheWorld)
+
+			-- Insight sends the default clock cycle; IA uses separate clocks for Shipwrecked and Hamlet.(Insight 发送的是 default 时钟周期；IA 的海难、猪镇使用独立周期)
+			local overrides = GLOBAL.TheWorld.topology and GLOBAL.TheWorld.topology.overrides
+			if HAS_MOD.INSIGHT and (not overrides or not overrides.clocktype or overrides.clocktype == "default") then
+				self.inst:ListenForEvent("moon_cycle_dirty", function(inst, data)
+					if type(data) == "table" and type(data.moon_cycle) == "number" then
+						self.inst:DoTaskInTime(0, function()
+							UpdateMoonPhase()
+							-- Server slot 1 is the new moon, corresponding to slot 10 in this table.(服务端第 1 格是新月，对应此处周期表的第 10 格)
+							offset = data.moon_cycle + 8 - GLOBAL.TheWorld.state.cycles
+							confident = true
+							PredictNextFullMoon(confident)
+						end)
+					end
+				end, GLOBAL.TheWorld)
 			end
 		end
 

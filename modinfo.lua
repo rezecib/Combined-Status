@@ -12,10 +12,10 @@ name = en_zh("Combined Status", "综合状态显示")
 description = en_zh("Displays Health, Hunger, Sanity, Temperature, Seasons, Moon Phase, and World Day.", "显示血量、饥饿值、精神值、温度、季节、月相和天数。")
 
 --Who wrote this awesome mod?
-author = "rezecib, Kiopho, Soilworker, hotmatrixx, penguin0616"
+author = "rezecib, Kiopho, Soilworker, hotmatrixx, penguin0616, 冰冰羊"
 
 --A version number so you can ask people if they are running an old version of your mod.
-version = "1.9.8"
+version = "1.9.9"
 
 --This lets other players know if your mod is out of date. This typically needs to be updated every time there's a new game update.
 api_version = 6

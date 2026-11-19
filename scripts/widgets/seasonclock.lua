@@ -72,7 +72,7 @@ local SeasonClock = Class(Widget, function(self, owner, isdst, season_transition
 	end
 
     self._face = self:AddChild(Image("images/hud.xml", "clock_NIGHT.tex"))
-    self._face:SetClickable(false)
+    self._face:SetClickable(true)
 	self._face:SetScale(0.5)
 
 	-- build each segment on the clock and set its rotation and position
